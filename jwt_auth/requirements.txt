@@ -3,10 +3,10 @@ djangorestframework
 djangorestframework-simplejwt
 drf-yasg
 django-cors-headers
-django-filters
+#django-filters
 #django-multipart-parser
-django-formtools
-python-decouple
+#django-formtools
+#python-decouple
 #django.core.mail
 #django-template.loader
 #json
