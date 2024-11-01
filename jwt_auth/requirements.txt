@@ -8,4 +8,4 @@ django-cors-headers
 #django-formtools
 #python-decouple
 #django.core.mail
-core-api
+#core-api
