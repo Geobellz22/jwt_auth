@@ -9,3 +9,4 @@ django-cors-headers
 #python-decouple
 #django.core.mail
 #core-api
+gunicorn
