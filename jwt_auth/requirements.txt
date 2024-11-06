@@ -10,3 +10,4 @@ django-cors-headers
 #django.core.mail
 core-api
 gunicorn
+psycopg2-binary
