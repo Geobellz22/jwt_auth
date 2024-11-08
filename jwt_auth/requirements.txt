@@ -8,6 +8,6 @@ django-cors-headers
 #django-formtools
 #python-decouple
 #django.core.mail
-core-api
+coreapi
 gunicorn
 psycopg2-binary
