@@ -149,7 +149,7 @@ DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'st377126@gmail.com')
 SUPPORT_EMAIL = os.getenv('SUPPORT_EMAIL', 'st377126@gmail.com')
 
 # Additional settings to handle the deployment environment
-SECURE_SSL_REDIRECT = not DEBUG
+SECURE_SSL_REDIRECT = False
 CSRF_COOKIE_SECURE = not DEBUG
 SESSION_COOKIE_SECURE = not DEBUG
 X_FRAME_OPTIONS = 'DENY'
