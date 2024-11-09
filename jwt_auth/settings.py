@@ -101,10 +101,10 @@ ACCOUNT_UNIQUE_EMAIL = True
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('POSTGRES_DB', 'Geobellz'),
-        'USER': os.getenv('POSTGRES_USER', 'myuser'),
-        'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'GEOBELLZ22'),
-        'HOST': os.getenv('DB_HOST', 'localhost'),
+        'NAME': os.getenv('POSTGRES_DB', 'jwt_auth_f8p1'),
+        'USER': os.getenv('POSTGRES_USER', 'jwt_auth_f8p1_user'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'Mjo942cdjXMUNWmgkMXwViIwv3yyAC98'),
+        'HOST': os.getenv('DB_HOST', 'dpg-csn3gv88fa8c73af20gg-a.oregon-postgres.render.com'),
         'PORT': os.getenv('DB_PORT', '5432'),
     }
 }
