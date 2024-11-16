@@ -27,34 +27,38 @@ from django.conf.urls.static import static
 from django.conf import settings
 from account.views import CustomTokenObtainPairView
 
+# Schema View Configuration
 schema_view = get_schema_view(
     openapi.Info(
         title="MATRIX MOMENTUM",
         default_version="v1.0.0",
         description="Authentication System",
-        contact= openapi.Contact(email=""),
-        license= openapi.License(name="MIT License"),
+        contact=openapi.Contact(email=""),
+        license=openapi.License(name="MIT License"),
     ),
     public=True,
-    permission_classes=[permissions.AllowAny,],
+    permission_classes=[permissions.AllowAny],
 )
 
-
+# URL Patterns
 urlpatterns = [
     path('admin/', admin.site.urls),
-    
-    path('account/login/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
+
+    # Authentication URLs
+    path('account/login/', CustomTokenObtainPairView.as_view(), name='account_token_obtain_pair'),
     path('account/login/refresh/', jwt_views.TokenRefreshView.as_view(), name='token_refresh'),
     path('account/register/', views.register_user, name="sign_up"),
-    path('account/confirm/', views.confirm_email, name='confirm-email'),
-    path('account/token/', views.CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
-    
-    path('', schema_view.with_ui('swagger'), name='schema-swagger-ui'),
-    path('docs/', schema_view.with_ui('redoc'), name='schema-redoc'),
+    path('account/confirm/', views.confirm_email, name='confirm_email'),
+
+    # Swagger and Redoc
+    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    path('docs/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+
+    # App-specific Endpoints
     path('FAQ/API/', include('FAQ.urls')),
     path('transaction-history/API/', include('TransactionHistory.urls')),
     path('referral/', include('referral.urls')),
-    path('contact us/API/', include('CONTACT.urls')),
+    path('contact-us/API/', include('CONTACT.urls')),
     path('make-deposit/', include('MakeDeposit.urls')),
     path('your-deposit/', include('YourDeposit.urls')),
     path('referral-link/', include('ReferralLinks.urls')),
@@ -62,3 +66,8 @@ urlpatterns = [
     path('EditAccount/', include('EditAccount.urls')),
     path('security/', include('Security.urls')),
 ]
+
+# Static and Media Files
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
