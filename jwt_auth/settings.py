@@ -13,7 +13,7 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-wmu^nf&+zf7l_^*ogejqg
 DEBUG = config('DEBUG', default=False, cast=bool)
 
 # Allowed hosts: Add your domains here in production!
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost').split(',')
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1.8000').split(',')
 
 # Application definition
 INSTALLED_APPS = [
