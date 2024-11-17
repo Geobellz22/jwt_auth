@@ -14,8 +14,10 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 from django.contrib import admin
 from django.urls import path, include
+from django.http import HttpResponseRedirect
 from account import views
 
 from rest_framework import permissions
@@ -33,7 +35,7 @@ schema_view = get_schema_view(
         title="MATRIX MOMENTUM",
         default_version="v1.0.0",
         description="Authentication System",
-        contact=openapi.Contact(email=""),
+        contact=openapi.Contact(email="support@example.com"),
         license=openapi.License(name="MIT License"),
     ),
     public=True,
@@ -65,6 +67,9 @@ urlpatterns = [
     path('withdraw/', include('Withdraw.urls')),
     path('EditAccount/', include('EditAccount.urls')),
     path('security/', include('Security.urls')),
+
+    # Root Redirect
+    path('', lambda request: HttpResponseRedirect('/swagger/'), name='root_redirect'),
 ]
 
 # Static and Media Files

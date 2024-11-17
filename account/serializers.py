@@ -19,9 +19,9 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'id', 'email', 'username', 'confirmation_code', 'name', 
-            'is_user', 'password', 'Bitcoin_wallet', 'Tether_usdt_trc20_wallet', 
-            'Tron_wallet', 'Etherum_wallet', 'Bnb_wallet', 'Dogecoin_wallet', 
-            'Usdt_erc20_wallet', 'Bitcoin_cash_wallet'
+            'is_user', 'password', 'bitcoin_wallet', 'tether_usdt_trc20_wallet', 
+            'tron_wallet', 'ethereum_wallet', 'bnb_wallet', 'dogecoin_wallet', 
+            'usdt_erc20_wallet', 'bitcoin_cash_wallet'
         ]
         read_only_fields = ['is_user']
         extra_kwargs = {
