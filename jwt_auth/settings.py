@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 from datetime import timedelta
-from decouple import config  # Using `decouple` ensures sensitive data is stored in `.env`
+from decouple import config
 
 # Build paths inside the project
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -10,10 +10,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-wmu^nf&+zf7l_^*ogejqgxu0%srtd$cs5s87q%7+g@5quc013b')
 
 # DEBUG setting: Ensure this is `False` in production!
-DEBUG = config('DEBUG', default=False, cast=bool)
+DEBUG = config('DEBUG', default=True, cast=bool)
 
 # Allowed hosts: Add your domains here in production!
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1.8000').split(',')
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
 
 # Application definition
 INSTALLED_APPS = [
@@ -29,7 +29,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
     'rest_framework.authtoken',
-    
+
     # Custom apps
     'account',
     'FAQ',
@@ -42,6 +42,9 @@ INSTALLED_APPS = [
     'Withdraw',
     'EditAccount',
     'Security',
+
+    # CORS
+    'corsheaders',
 ]
 
 # JWT Settings
@@ -56,9 +59,10 @@ SIMPLE_JWT = {
 
 # Middleware
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  # Add this line
+    'django.middleware.common.CommonMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -71,7 +75,7 @@ ROOT_URLCONF = 'jwt_auth.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],  # Use custom templates directory if needed
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -147,7 +151,25 @@ DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='st377126@gmail.com')
 SUPPORT_EMAIL = config('SUPPORT_EMAIL', default='st377126@gmail.com')
 
 # Security settings
-SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=False, cast=bool)
-CSRF_COOKIE_SECURE = not DEBUG
-SESSION_COOKIE_SECURE = not DEBUG
+SECURE_SSL_REDIRECT = False  # Set to True in production
+CSRF_COOKIE_SECURE = False  # Set to True in production
+SESSION_COOKIE_SECURE = False  # Set to True in production
 X_FRAME_OPTIONS = 'DENY'
+
+# CORS settings
+CORS_ALLOW_ALL_ORIGINS = True  # Allow all origins temporarily
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_METHODS = [
+    "GET",
+    "POST",
+    "PUT",
+    "PATCH",
+    "DELETE",
+    "OPTIONS",
+]
+CORS_ALLOW_HEADERS = [
+    "content-type",
+    "authorization",
+    "x-csrftoken",
+    "x-requested-with",
+]
