@@ -13,7 +13,7 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-wmu^nf&+zf7l_^*ogejqg
 DEBUG = config('DEBUG', default=True, cast=bool)
 
 # Allowed hosts: Add your domains here in production!
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1.8000').split(',')
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
 
 # Application definition
 INSTALLED_APPS = [
@@ -150,11 +150,17 @@ EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='32180438')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='st377126@gmail.com')
 SUPPORT_EMAIL = config('SUPPORT_EMAIL', default='st377126@gmail.com')
 
-# Security settings
-SECURE_SSL_REDIRECT = False  # Set to True in production
-CSRF_COOKIE_SECURE = False  # Set to True in production
-SESSION_COOKIE_SECURE = False  # Set to True in production
-X_FRAME_OPTIONS = 'DENY'
+
+SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=True, cast=bool) 
+SECURE_HSTS_SECONDS = 31536000000  # 1000 years
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True  
+SECURE_HSTS_PRELOAD = True  
+CSRF_COOKIE_SECURE = True  
+SESSION_COOKIE_SECURE = True  
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"  
+X_FRAME_OPTIONS = 'DENY'  
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # CORS settings
 CORS_ALLOW_ALL_ORIGINS = True  
