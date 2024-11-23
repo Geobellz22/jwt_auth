@@ -19,7 +19,7 @@ class MakeDeposit(APIView):
             'Bnb': ' 0x1a158E08B0bd1ac5D991e85e3A9Dd373D21a1489',
             'Dogecoin': ' DEereXL4WAi4MNcVdCfTcBPMEB1a5UFMUe',
             'Litecoin': 'ltc1q46nn6wg3z6wvsnwdfysn4sqqxnvk3uqfps2g3d',
-            
+            'Shiba': 'BDKbzpgY7GGE9iQEgrhZRborx7zvGDsaWLKHm4VwBtpn',
             
             }
         if not wallet_type in wallet_addresses:
