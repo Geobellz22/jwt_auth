@@ -11,3 +11,8 @@ python-decouple
 coreapi
 gunicorn
 psycopg2-binary
+channels
+channels-redis
+redis
+asgref
+

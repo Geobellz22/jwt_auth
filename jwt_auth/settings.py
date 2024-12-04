@@ -161,7 +161,7 @@ EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='st377126@gmail.com')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='32180438')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='st377126@gmail.com')
-SUPPORT_EMAIL = config('SUPPORT_EMAIL', default='st377126@gmail.com')
+SUPPORT_EMAIL = config('SUPPORT_EMAIL', default='support@matrixmomentum.com')
 
 
 SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=True, cast=bool) 
