@@ -67,6 +67,7 @@ urlpatterns = [
     path('withdraw/', include('Withdraw.urls')),
     path('EditAccount/', include('EditAccount.urls')),
     path('security/', include('Security.urls')),
+    path('Chat/', include('Chat.urls')),
 
     # Root Redirect
     path('', lambda request: HttpResponseRedirect('/swagger/'), name='root_redirect'),

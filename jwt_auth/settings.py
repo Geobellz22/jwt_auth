@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     'Withdraw',
     'EditAccount',
     'Security',
+    'Chat',
+    'channels',
 
     # CORS
     'corsheaders',
@@ -101,6 +103,17 @@ REST_FRAMEWORK = {
 }
 
 WSGI_APPLICATION = 'jwt_auth.wsgi.application'
+# ASGI APLLICATION 
+ASGI_APPLICATION = 'jwt_auth.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    }
+}
 
 # Database settings
 DATABASES = {
