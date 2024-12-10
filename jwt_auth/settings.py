@@ -119,13 +119,14 @@ CHANNEL_LAYERS = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('POSTGRES_DB', default='jwt_auth_f8p1'),
-        'USER': config('POSTGRES_USER', default='jwt_auth_f8p1_user'),
-        'PASSWORD': config('POSTGRES_PASSWORD', default='Mjo942cdjXMUNWmgkMXwViIwv3yyAC98'),
-        'HOST': config('DB_HOST', default='dpg-csn3gv88fa8c73af20gg-a.oregon-postgres.render.com'),
-        'PORT': config('DB_PORT', default='5432'),
+        'NAME': config('POSTGRES_DB', default='jwt_auth'),  # Updated DB name
+        'USER': config('POSTGRES_USER', default='metoura-backend_owner'),  # Updated username
+        'PASSWORD': config('POSTGRES_PASSWORD', default='n5zlmu1oMSJK'),  # Updated password
+        'HOST': config('DB_HOST', default='ep-yellow-lab-a8avm7up.eastus2.azure.neon.tech'),  # Updated host
+        'PORT': config('DB_PORT', default='5432'),  # Default PostgreSQL port
     }
 }
+
 
 # Auth Model
 AUTH_USER_MODEL = 'account.User'
