@@ -33,7 +33,7 @@ schema_view = get_schema_view(
 )
 
 # Swagger settings based on environment
-SWAGGER_ENABLED = config('SWAGGER_ENABLED', default=False, cast=bool)
+SWAGGER_ENABLED = config('SWAGGER_ENABLED', default=True, cast=bool)
 
 # URL patterns
 urlpatterns = [
