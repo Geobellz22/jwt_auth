@@ -6,12 +6,13 @@ from decouple import config
 # Build paths inside the project
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Security settings
+# SECURITY WARNING: Keep the secret key secret in production!
 SECRET_KEY = config('SECRET_KEY', default='unsafe-secret-key')
 
-# Fetch from .env
+# DEBUG setting: Ensure this is False in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
+# Allowed hosts: Add your domains here in production!
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
 
 # Application definition
@@ -28,6 +29,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
     'rest_framework.authtoken',
+
     # Custom apps
     'account',
     'FAQ',
@@ -40,10 +42,13 @@ INSTALLED_APPS = [
     'Withdraw',
     'EditAccount',
     'Security',
-    'Chat',
-    'channels',
+    'Chat',  # Added chat app for real-time updates
+
     # CORS
     'corsheaders',
+
+    # Channels
+    'channels',
 ]
 
 # JWT Settings
@@ -58,7 +63,7 @@ SIMPLE_JWT = {
 
 # Middleware
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',  # CORS Middleware
+    'corsheaders.middleware.CorsMiddleware',  # Add this line
     'django.middleware.common.CommonMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -70,7 +75,7 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'jwt_auth.urls'
 
-# Templates
+# Template settings
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -87,7 +92,20 @@ TEMPLATES = [
     },
 ]
 
-# REST Framework
+# Channels settings
+ASGI_APPLICATION = 'jwt_auth.asgi.application'
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [
+                (config('REDIS_HOST', default='127.0.0.1'), config('REDIS_PORT', default=6379, cast=int))
+            ],
+        },
+    },
+}
+
+# Rest Framework settings
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
     'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -99,16 +117,7 @@ REST_FRAMEWORK = {
     ],
 }
 
-# ASGI and Channels settings
-ASGI_APPLICATION = 'jwt_auth.asgi.application'
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            "hosts": [(config('REDIS_HOST', default='127.0.0.1'), config('REDIS_PORT', default=6379, cast=int))],
-        },
-    }
-}
+WSGI_APPLICATION = 'jwt_auth.wsgi.application'
 
 # Database settings
 DATABASES = {
@@ -122,7 +131,8 @@ DATABASES = {
     }
 }
 
-# Authentication
+
+# Auth Model
 AUTH_USER_MODEL = 'account.User'
 
 # Password validation
@@ -139,33 +149,38 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-# Static and media files
+# Static files
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
-# Email settings
+# Default primary key field type
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Email backend settings
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
 EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
 EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
-EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='your-email@example.com')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='your-email-password')
-DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='your-email@example.com')
-SUPPORT_EMAIL = config('SUPPORT_EMAIL', default='support@example.com')
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='st377126@gmail.com')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='32180438')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='st377126@gmail.com')
+SUPPORT_EMAIL = config('SUPPORT_EMAIL', default='st377126@gmail.com')
 
-# Security settings
 SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=True, cast=bool)
-SECURE_HSTS_SECONDS = 31536000  # 1 year
+SECURE_HSTS_SECONDS = 31536000000  # 1000 years
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 X_FRAME_OPTIONS = 'DENY'
+
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # CORS settings
-CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', default=True, cast=bool)
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_METHODS = [
     "GET",
@@ -181,31 +196,3 @@ CORS_ALLOW_HEADERS = [
     "x-csrftoken",
     "x-requested-with",
 ]
-
-# Set environment-based CORS settings
-ENVIRONMENT = config('ENVIRONMENT', default='production')
-
-if ENVIRONMENT == "development":
-    CORS_ALLOWED_ORIGINS = [
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    ]
-elif ENVIRONMENT == "production":
-    CORS_ALLOWED_ORIGIN_REGEXES = [
-        r"^https://.*$",  # Allow all HTTPS domains
-    ]
-
-# Ensure only valid CORS headers are passed in production
-if ENVIRONMENT == "production":
-    CORS_ALLOW_ALL_ORIGINS = False
-    CORS_ALLOWED_ORIGINS = []
-
-# CSRF Exemption for API views (since you're using JWT)
-CSRF_TRUSTED_ORIGINS = [
-    "https://*.yourdomain.com",  # Replace with your domain in production
-]
-
-# Disable CSRF for API endpoints if you're using JWT for authentication
-CSRF_COOKIE_SECURE = True
-SESSION_COOKIE_SECURE = True
-SECURE_SSL_REDIRECT = True
