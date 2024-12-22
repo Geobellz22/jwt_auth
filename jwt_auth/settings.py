@@ -7,10 +7,10 @@ from decouple import config
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: Keep the secret key secret in production!
-SECRET_KEY = config('SECRET_KEY', default='unsafe-secret-key')
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-wmu^nf&+zf7l_^*ogejqgxu0%srtd$cs5s87q%7+g@5quc013b')
 
 # DEBUG setting: Ensure this is False in production!
-DEBUG = config('DEBUG', default=False, cast=bool)
+DEBUG = config('DEBUG', default=True, cast=bool)
 
 # Allowed hosts: Add your domains here in production!
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
@@ -123,14 +123,13 @@ WSGI_APPLICATION = 'jwt_auth.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('POSTGRES_DB', default='jwt_auth'),
-        'USER': config('POSTGRES_USER', default='your-db-user'),
-        'PASSWORD': config('POSTGRES_PASSWORD', default='your-db-password'),
-        'HOST': config('DB_HOST', default='your-db-host'),
+        'NAME': config('POSTGRES_DB', default='jwt_auth_f8p1'),
+        'USER': config('POSTGRES_USER', default='jwt_auth_f8p1_user'),
+        'PASSWORD': config('POSTGRES_PASSWORD', default='Mjo942cdjXMUNWmgkMXwViIwv3yyAC98'),
+        'HOST': config('DB_HOST', default='dpg-csn3gv88fa8c73af20gg-a.oregon-postgres.render.com'),
         'PORT': config('DB_PORT', default='5432'),
     }
 }
-
 
 # Auth Model
 AUTH_USER_MODEL = 'account.User'
