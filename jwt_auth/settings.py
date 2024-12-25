@@ -7,10 +7,10 @@ from decouple import config
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: Keep the secret key secret in production!
-SECRET_KEY = config('SECRET_KEY', default='django-insecure-wmu^nf&+zf7l_^*ogejqgxu0%srtd$cs5s87q%7+g@5quc013b')
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-this-in-production')
 
 # DEBUG setting: Ensure this is False in production!
-DEBUG = config('DEBUG', default=True, cast=bool)
+DEBUG = config('DEBUG', default=False, cast=bool)
 
 # Allowed hosts: Add your domains here in production!
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
@@ -28,7 +28,7 @@ INSTALLED_APPS = [
     'coreapi',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
-    'rest_framework.authtoken',
+    'corsheaders',
 
     # Custom apps
     'account',
@@ -42,10 +42,7 @@ INSTALLED_APPS = [
     'Withdraw',
     'EditAccount',
     'Security',
-    'Chat',  # Added chat app for real-time updates
-
-    # CORS
-    'corsheaders',
+    'Chat',
 
     # Channels
     'channels',
@@ -63,7 +60,7 @@ SIMPLE_JWT = {
 
 # Middleware
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',  # Add this line
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -113,7 +110,6 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
-        'rest_framework.renderers.BrowsableAPIRenderer',
     ],
 }
 
@@ -123,10 +119,10 @@ WSGI_APPLICATION = 'jwt_auth.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('POSTGRES_DB', default='jwt_auth_f8p1'),
-        'USER': config('POSTGRES_USER', default='jwt_auth_f8p1_user'),
-        'PASSWORD': config('POSTGRES_PASSWORD', default='Mjo942cdjXMUNWmgkMXwViIwv3yyAC98'),
-        'HOST': config('DB_HOST', default='dpg-csn3gv88fa8c73af20gg-a.oregon-postgres.render.com'),
+        'NAME': config('POSTGRES_DB', default='your_db_name'),
+        'USER': config('POSTGRES_USER', default='your_db_user'),
+        'PASSWORD': config('POSTGRES_PASSWORD', default='your_db_password'),
+        'HOST': config('DB_HOST', default='your_db_host'),
         'PORT': config('DB_PORT', default='5432'),
     }
 }
@@ -162,20 +158,20 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
 EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
 EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
-EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='st377126@gmail.com')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='32180438')
-DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='st377126@gmail.com')
-SUPPORT_EMAIL = config('SUPPORT_EMAIL', default='st377126@gmail.com')
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='your_email@example.com')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='your_email_password')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='your_email@example.com')
+SUPPORT_EMAIL = config('SUPPORT_EMAIL', default='support_email@example.com')
 
-SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=True, cast=bool)
-SECURE_HSTS_SECONDS = 31536000000  # 1000 years
+# Security settings for production
+SECURE_SSL_REDIRECT = True
+SECURE_HSTS_SECONDS = 31536000  # 1 year
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 X_FRAME_OPTIONS = 'DENY'
-
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # CORS settings
@@ -195,3 +191,17 @@ CORS_ALLOW_HEADERS = [
     "x-csrftoken",
     "x-requested-with",
 ]
+
+# Swagger documentation settings
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {
+        'Bearer': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'in': 'header',
+        },
+    },
+    'USE_SESSION_AUTH': False,
+    'DOC_EXPANSION': 'none',
+    'JSON_EDITOR': True,
+}
