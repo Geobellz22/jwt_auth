@@ -6,10 +6,10 @@ from decouple import config
 # Build paths inside the project
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Security settings
-SECRET_KEY = config('SECRET_KEY', default='unsafe-secret-key')
+# SECURITY WARNING: Keep the secret key secret in production!
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-this-in-production')
 
-# Fetch from .env
+# DEBUG setting: Ensure this is False in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
@@ -29,6 +29,8 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
     'rest_framework.authtoken',
+    'corsheaders',
+
     # Custom apps
     'account',
     'FAQ',
@@ -45,6 +47,9 @@ INSTALLED_APPS = [
     'channels',
     # CORS
     'corsheaders',
+
+    # Channels
+    'channels',
 ]
 
 # JWT Settings
@@ -59,7 +64,8 @@ SIMPLE_JWT = {
 
 # Middleware
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',  # CORS Middleware
+    #'corsheaders.middleware.CorsMiddleware',  # CORS Middleware
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -89,6 +95,20 @@ TEMPLATES = [
 ]
 
 # REST Framework
+# Channels settings
+ASGI_APPLICATION = 'jwt_auth.asgi.application'
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [
+                (config('REDIS_HOST', default='127.0.0.1'), config('REDIS_PORT', default=6379, cast=int))
+            ],
+        },
+    },
+}
+
+# Rest Framework settings
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
     'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -96,20 +116,10 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
-        'rest_framework.renderers.BrowsableAPIRenderer',
     ],
 }
 
-# ASGI and Channels settings
-ASGI_APPLICATION = 'jwt_auth.asgi.application'
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            "hosts": [(config('REDIS_HOST', default='127.0.0.1'), config('REDIS_PORT', default=6379, cast=int))],
-        },
-    }
-}
+WSGI_APPLICATION = 'jwt_auth.wsgi.application'
 
 # Database settings
 DATABASES = {
@@ -156,6 +166,13 @@ SUPPORT_EMAIL = config('SUPPORT_EMAIL', default='support@example.com')
 
 # Security settings
 SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=True, cast=bool)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='your_email@example.com')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='your_email_password')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='your_email@example.com')
+SUPPORT_EMAIL = config('SUPPORT_EMAIL', default='support_email@example.com')
+
+# Security settings for production
+SECURE_SSL_REDIRECT = True
 SECURE_HSTS_SECONDS = 31536000  # 1 year
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
@@ -167,6 +184,7 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # CORS settings
 CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', default=True, cast=bool)
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_METHODS = [
     "GET",
@@ -210,3 +228,16 @@ CSRF_TRUSTED_ORIGINS = [
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
 SECURE_SSL_REDIRECT = True
+# Swagger documentation settings
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {
+        'Bearer': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'in': 'header',
+        },
+    },
+    'USE_SESSION_AUTH': False,
+    'DOC_EXPANSION': 'none',
+    'JSON_EDITOR': True,
+}
