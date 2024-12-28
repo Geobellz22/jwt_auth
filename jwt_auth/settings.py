@@ -3,17 +3,20 @@ from pathlib import Path
 from datetime import timedelta
 from decouple import config
 
-PORT = os.getenv('PORT', 8000)
 # Build paths inside the project
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Security settings
-SECRET_KEY = config('SECRET_KEY', default='unsafe-secret-key')  # Fetch from .env
+SECRET_KEY = config('SECRET_KEY', default='unsafe-secret-key')
+
+# Fetch from .env
 DEBUG = config('DEBUG', default=False, cast=bool)
+
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
 
 # Application definition
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -163,7 +166,7 @@ X_FRAME_OPTIONS = 'DENY'
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # CORS settings
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', default=True, cast=bool)
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_METHODS = [
     "GET",
@@ -180,6 +183,7 @@ CORS_ALLOW_HEADERS = [
     "x-requested-with",
 ]
 
+# Set environment-based CORS settings
 ENVIRONMENT = config('ENVIRONMENT', default='production')
 
 if ENVIRONMENT == "development":
@@ -191,3 +195,18 @@ elif ENVIRONMENT == "production":
     CORS_ALLOWED_ORIGIN_REGEXES = [
         r"^https://.*$",  # Allow all HTTPS domains
     ]
+
+# Ensure only valid CORS headers are passed in production
+if ENVIRONMENT == "production":
+    CORS_ALLOW_ALL_ORIGINS = False
+    CORS_ALLOWED_ORIGINS = []
+
+# CSRF Exemption for API views (since you're using JWT)
+CSRF_TRUSTED_ORIGINS = [
+    "https://*.yourdomain.com",  # Replace with your domain in production
+]
+
+# Disable CSRF for API endpoints if you're using JWT for authentication
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+SECURE_SSL_REDIRECT = True

@@ -14,5 +14,6 @@ psycopg2-binary
 channels
 channels-redis
 redis
-asgref
+asigref
+daphne
 
