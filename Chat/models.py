@@ -1,3 +1,5 @@
+import django
+django.setup()
 from django.db import models
 from django.conf import settings
 
