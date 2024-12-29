@@ -220,9 +220,9 @@ if ENVIRONMENT == "production":
     CORS_ALLOWED_ORIGINS = []
 
 # CSRF Exemption for API views (since you're using JWT)
-CSRF_TRUSTED_ORIGINS = [
-    "https://*.yourdomain.com",  # Replace with your domain in production
-]
+#CSRF_TRUSTED_ORIGINS = [
+ #   "https://*.yourdomain.com",  # Replace with your domain in production
+#]
 
 # Disable CSRF for API endpoints if you're using JWT for authentication
 CSRF_COOKIE_SECURE = True
