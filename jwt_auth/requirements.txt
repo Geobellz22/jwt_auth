@@ -16,4 +16,4 @@ channels-redis
 redis
 #asigref
 daphne
-
+twisted[tls, http2]
