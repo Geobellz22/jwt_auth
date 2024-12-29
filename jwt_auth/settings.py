@@ -46,10 +46,6 @@ INSTALLED_APPS = [
     'Chat',
     'channels',
     # CORS
-    'corsheaders',
-
-    # Channels
-    'channels',
 ]
 
 # JWT Settings
