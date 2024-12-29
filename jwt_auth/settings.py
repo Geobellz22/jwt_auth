@@ -92,7 +92,6 @@ TEMPLATES = [
 
 # REST Framework
 # Channels settings
-ASGI_APPLICATION = 'jwt_auth.asgi.application'
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
@@ -116,7 +115,7 @@ REST_FRAMEWORK = {
 }
 
 WSGI_APPLICATION = 'jwt_auth.wsgi.application'
-
+ASGI_APPLICATION = 'jwt_auth.asgi.application'
 # Database settings
 DATABASES = {
     'default': {
