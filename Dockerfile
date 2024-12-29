@@ -11,16 +11,16 @@ COPY jwt_auth/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the application code to the container
-COPY . .
+
 
 # Expose the port that Django will run on
-EXPOSE 8000
+#EXPOSE 8000
 
 # Run Django development server (modify as needed for production)
 #CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
 
-COPY . .
 COPY entrypoint.sh /entrypoint.sh
+COPY . .
 RUN chmod +x /entrypoint.sh
 EXPOSE 8000
 ENTRYPOINT ["/app/entrypoint.sh"]
