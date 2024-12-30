@@ -9,7 +9,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: Keep the secret key secret in production!
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-this-in-production')
 
-# DEBUG setting: Ensure this is False in production!
+# Debug setting: Ensure this is False in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
@@ -45,7 +45,6 @@ INSTALLED_APPS = [
     'Security',
     'Chat',
     'channels',
-    # CORS
 ]
 
 # JWT Settings
@@ -60,8 +59,7 @@ SIMPLE_JWT = {
 
 # Middleware
 MIDDLEWARE = [
-    #'corsheaders.middleware.CorsMiddleware',  # CORS Middleware
-    'corsheaders.middleware.CorsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',  # CORS Middleware
     'django.middleware.common.CommonMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -90,7 +88,6 @@ TEMPLATES = [
     },
 ]
 
-# REST Framework
 # Channels settings
 CHANNEL_LAYERS = {
     'default': {
@@ -103,7 +100,7 @@ CHANNEL_LAYERS = {
     },
 }
 
-# Rest Framework settings
+# REST Framework settings
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
     'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -116,6 +113,7 @@ REST_FRAMEWORK = {
 
 WSGI_APPLICATION = 'jwt_auth.wsgi.application'
 ASGI_APPLICATION = 'jwt_auth.asgi.application'
+
 # Database settings
 DATABASES = {
     'default': {
@@ -163,13 +161,6 @@ SUPPORT_EMAIL = config('SUPPORT_EMAIL', default='support@example.com')
 
 # Security settings
 SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=False, cast=bool)
-EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='your_email@example.com')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='your_email_password')
-DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='your_email@example.com')
-SUPPORT_EMAIL = config('SUPPORT_EMAIL', default='support_email@example.com')
-
-# Security settings for production
-SECURE_SSL_REDIRECT = False
 SECURE_HSTS_SECONDS = 31536000  # 1 year
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
@@ -181,7 +172,6 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # CORS settings
 CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', default=True, cast=bool)
-CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_METHODS = [
     "GET",
@@ -211,20 +201,11 @@ elif ENVIRONMENT == "production":
         r"^https://.*$",  # Allow all HTTPS domains
     ]
 
-# Ensure only valid CORS headers are passed in production
-if ENVIRONMENT == "production":
-    CORS_ALLOW_ALL_ORIGINS = False
-    CORS_ALLOWED_ORIGINS = []
-
 # CSRF Exemption for API views (since you're using JWT)
-#CSRF_TRUSTED_ORIGINS = [
- #   "https://*.yourdomain.com",  # Replace with your domain in production
-#]
-
-# Disable CSRF for API endpoints if you're using JWT for authentication
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
 SECURE_SSL_REDIRECT = False
+
 SWAGGER_SETTINGS = {
     'USE_SESSION_AUTH': False,  # Disable session authentication
     'DOC_EXPANSION': 'none',    # Collapse endpoints by default
@@ -238,9 +219,3 @@ SWAGGER_SETTINGS = {
         },
     },
 }
-
-
-
-
-
-
