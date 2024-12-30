@@ -147,7 +147,7 @@ USE_TZ = True
 
 # Static and media files
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Email settings
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -223,16 +223,22 @@ if ENVIRONMENT == "production":
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
 SECURE_SSL_REDIRECT = False
-# Swagger documentation settings
 SWAGGER_SETTINGS = {
-    'SECURITY_DEFINITIONS': {
+    'USE_SESSION_AUTH': False,  # Disable session authentication
+    'DOC_EXPANSION': 'none',    # Collapse endpoints by default
+    'JSON_EDITOR': True,        # Enable JSON editor for request bodies
+    'DEFAULT_MODEL_RENDERING': 'example',
+    'SECURITY_DEFINITIONS': {   # Add Bearer Token for endpoints requiring authentication
         'Bearer': {
             'type': 'apiKey',
             'name': 'Authorization',
             'in': 'header',
         },
     },
-    'USE_SESSION_AUTH': False,
-    'DOC_EXPANSION': 'none',
-    'JSON_EDITOR': True,
 }
+
+
+
+
+
+
