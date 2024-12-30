@@ -13,7 +13,7 @@ from rest_framework import permissions
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework_simplejwt import views as jwt_views
-
+from rest_framework.permissions import AllowAny
 from django.conf.urls.static import static
 from django.conf import settings
 from decouple import config
@@ -29,7 +29,7 @@ schema_view = get_schema_view(
         license=openapi.License(name="MIT License"),
     ),
     public=True,
-    permission_classes=(permissions.IsAuthenticated,),  # Restrict access to authenticated users
+     permission_classes=(AllowAny,),  # Allow access without authentication
 )
 
 # Swagger settings based on environment
