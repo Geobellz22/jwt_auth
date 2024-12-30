@@ -160,14 +160,14 @@ DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='your-email@example.co
 SUPPORT_EMAIL = config('SUPPORT_EMAIL', default='support@example.com')
 
 # Security settings
-SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=True, cast=bool)
+SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=False, cast=bool)
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='your_email@example.com')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='your_email_password')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='your_email@example.com')
 SUPPORT_EMAIL = config('SUPPORT_EMAIL', default='support_email@example.com')
 
 # Security settings for production
-SECURE_SSL_REDIRECT = True
+SECURE_SSL_REDIRECT = False
 SECURE_HSTS_SECONDS = 31536000  # 1 year
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
@@ -222,7 +222,7 @@ if ENVIRONMENT == "production":
 # Disable CSRF for API endpoints if you're using JWT for authentication
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
-SECURE_SSL_REDIRECT = True
+SECURE_SSL_REDIRECT = False
 # Swagger documentation settings
 SWAGGER_SETTINGS = {
     'SECURITY_DEFINITIONS': {
