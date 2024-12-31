@@ -7,9 +7,11 @@ set -e
 echo "Applying database migrations..."
 python manage.py migrate --noinput
 
+python manage.py spectacular --color --file schema.yml
 # Collect static files
 echo "Collecting static files..."
 python manage.py collectstatic --noinput
+
 
 # Start Daphne server
 echo "Starting Daphne server..."
