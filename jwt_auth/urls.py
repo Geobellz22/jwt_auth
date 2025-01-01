@@ -60,7 +60,7 @@ urlpatterns = [
     path('api/chat/', include('Chat.urls')),
 
     # Root redirect to Swagger
-    path('', lambda request: HttpResponseRedirect('/internal/swagger/'), name='root_redirect'),
+    path('', lambda request: HttpResponseRedirect('/api/schema/swagger-ui/'), name='root_redirect'),
 ]
 
 # Swagger and Redoc - Conditional inclusion for production and development
