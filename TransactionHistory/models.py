@@ -19,6 +19,7 @@ class Transaction(models.Model):
         ('LTC', 'Litecoin'),
         ('TRC', 'Troncoin'),
         ('BCH', 'Bitcoin Cash')
+        ('SHIB', 'Shiba Coin'),
     ]
     
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='transactions')
