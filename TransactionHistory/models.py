@@ -18,7 +18,7 @@ class Transaction(models.Model):
         ('DOGE', 'Dogecoin'),
         ('LTC', 'Litecoin'),
         ('TRC', 'Troncoin'),
-        ('BCH', 'Bitcoin Cash')
+        ('BCH', 'Bitcoin Cash'),
         ('SHIB', 'Shiba Coin'),
     ]
     
