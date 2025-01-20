@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from drf_yasg.utils import swagger_auto_schema
 from django.core.mail import send_mail
 from django.contrib.auth import authenticate
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework import permissions
 from account.models import User
 from account.serializers import UserSerializer, MyTokenObtainPairSerializer
