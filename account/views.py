@@ -131,3 +131,6 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
 
 
+# Adding the CustomTokenRefreshView here
+class CustomTokenRefreshView(TokenRefreshView):
+    pass  # No changes are required unless you need customization for the refresh token process
