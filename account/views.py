@@ -1,135 +1,76 @@
-from django.conf import settings
-from django.core.mail import send_mail
-from rest_framework import status
-from rest_framework.permissions import AllowAny
-from rest_framework.response import Response
-from rest_framework.generics import GenericAPIView
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework import serializers
 from account.models import User
-from account.serializers import (
-    UserSerializer, 
-    MyTokenObtainPairSerializer, 
-    ConfirmEmailSerializer
-)
-import random
-import re
-from drf_yasg.utils import swagger_auto_schema
 
 
-# Helper function to validate password strength
-def is_strong_password(password):
-    """
-    Validates if a password is strong.
-    Requirements:
-    - At least 8 characters long
-    - Contains at least one uppercase letter
-    - Contains at least one lowercase letter
-    - Contains at least one digit
-    - Contains at least one special character (!@#$%^&*(), etc.)
-    """
-    if (
-        len(password) >= 8
-        and re.search(r'[A-Z]', password)  # At least one uppercase
-        and re.search(r'[a-z]', password)  # At least one lowercase
-        and re.search(r'\d', password)    # At least one digit
-        and re.search(r'[!@#$%^&*(),.?":{}|<>]', password)  # At least one special char
-    ):
-        return True
-    return False
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+
+        # Add custom claims
+        token['email'] = user.email
+        token['username'] = user.username
+        token['name'] = user.name
+        token['is_active'] = user.is_active
+
+        return token
 
 
-class RegisterUserView(GenericAPIView):
-    permission_classes = [AllowAny]
-    serializer_class = UserSerializer
-
-    @swagger_auto_schema(request_body=UserSerializer)
-    def post(self, request):
-        data = request.data
-
-        # Validate password strength
-        password = data.get("password")
-        if not is_strong_password(password):
-            return Response({
-                "error": "Password must be at least 8 characters long, contain uppercase, lowercase, digits, and special characters."
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer = self.get_serializer(data=data)
-        if serializer.is_valid():
-            user = serializer.save()
-
-            # Generate confirmation code
-            confirmation_code = ''.join([str(random.randint(0, 9)) for _ in range(4)])
-            user.confirmation_code = confirmation_code
-            user.save()
-
-            # Send email to user with confirmation code
-            email_subject = 'Email Confirmation'
-            email_message = f"""
-            Good Morning {user.name},
-
-            Thank you for Registering with us.
-
-            Your Confirmation Code is {confirmation_code}.
-            """
-            send_mail(
-                email_subject,
-                email_message,
-                settings.DEFAULT_FROM_EMAIL,
-                [user.email],
-                fail_silently=False
-            )
-
-            # Send user details to support email
-            support_email_subject = 'New User Registration Details'
-            support_email_message = f"""
-            A new user has registered:
-
-            Username: {user.username}
-            Email: {user.email}
-
-            Wallet Details:
-            - Bitcoin Wallet: {getattr(user, 'bitcoin_wallet', 'Not provided')}
-            - Tether USDT TRC20 Wallet: {getattr(user, 'tether_usdt_trc20_wallet', 'Not provided')}
-            - Tron Wallet: {getattr(user, 'tron_wallet', 'Not provided')}
-            - Ethereum Wallet: {getattr(user, 'ethereum_wallet', 'Not provided')}
-            - BNB Wallet: {getattr(user, 'bnb_wallet', 'Not provided')}
-            - Dogecoin Wallet: {getattr(user, 'dogecoin_wallet', 'Not provided')}
-            - USDT ERC20 Wallet: {getattr(user, 'usdt_erc20_wallet', 'Not provided')}
-            - Bitcoin Cash Wallet: {getattr(user, 'bitcoin_cash_wallet', 'Not provided')}
-            - Shiba Wallet: {getattr(user, 'shiba_wallet', 'Not provided')}
-            """
-            send_mail(
-                support_email_subject,
-                support_email_message,
-                settings.DEFAULT_FROM_EMAIL,
-                ['support@matrixmomentum.com'],
-                fail_silently=False
-            )
-
-            return Response({
-                'message': 'Confirmation code sent successfully',
-                'user': serializer.data
-            }, status=status.HTTP_201_CREATED)
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = [
+            'id', 'email', 'username', 'confirmation_code', 'name', 
+            'is_user', 'password', 'bitcoin_wallet', 'tether_usdt_trc20_wallet', 
+            'tron_wallet', 'ethereum_wallet', 'bnb_wallet', 'dogecoin_wallet', 
+            'usdt_erc20_wallet', 'bitcoin_cash_wallet'
+        ]
+        read_only_fields = ['is_user']
+        extra_kwargs = {
+            'password': {'write_only': True}
+        }
         
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def create(self, validated_data):
+        user = User.objects.create(
+            username=validated_data['username'],
+            email=validated_data['email'],
+            name=validated_data['name'],
+            is_user=True,
+            bitcoin_wallet=validated_data.get('bitcoin_wallet'),
+            tether_usdt_trc20_wallet=validated_data.get('tether_usdt_trc20_wallet'),
+            tron_wallet=validated_data.get('tron_wallet'),
+            ethereum_wallet=validated_data.get('ethereum_wallet'),
+            bnb_wallet=validated_data.get('bnb_wallet'),
+            dogecoin_wallet=validated_data.get('dogecoin_wallet'),
+            usdt_erc20_wallet=validated_data.get('usdt_erc20_wallet'),
+            bitcoin_cash_wallet=validated_data.get('bitcoin_cash_wallet'),
+        )
+        
+        user.set_password(validated_data['password'])
+        user.save()
+        return user
+        
+    def get_fields(self):
+        fields = super().get_fields()
+        if self.instance:
+            fields['email'].read_only = True
+        return fields
 
 
-class ConfirmEmailView(GenericAPIView):
-    permission_classes = [AllowAny]
-    serializer_class = ConfirmEmailSerializer
+class ConfirmEmailSerializer(serializers.Serializer):
+    confirmation_code = serializers.CharField(max_length=4)
 
-    @swagger_auto_schema(request_body=ConfirmEmailSerializer)
-    def post(self, request):
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({'message': 'Email confirmation successful.'}, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def validate_confirmation_code(self, value):
+        try:
+            user = User.objects.get(confirmation_code=value, is_active=False)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("Invalid or expired confirmation code.")
+        return user
 
-
-class CustomTokenObtainPairView(TokenObtainPairView):
-    serializer_class = MyTokenObtainPairSerializer
-
-
-class CustomTokenRefreshView(TokenRefreshView):
-    pass  # No changes are required unless you need customization for the refresh token process
+    def save(self):
+        user = self.validated_data['confirmation_code']
+        user.is_active = True
+        user.confirmation_code = ""
+        user.save()
+        return user
