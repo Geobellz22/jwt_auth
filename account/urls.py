@@ -1,10 +1,9 @@
 from django.urls import path
-from .views import RegisterUserView, confirm_email, CustomTokenObtainPairView
-from rest_framework_simplejwt.views import TokenRefreshView
+from .views import RegisterUserView, ConfirmEmailView, CustomTokenObtainPairView, CustomTokenRefreshView
 
 urlpatterns = [
-    path('register/', RegisterUserView.as_view(), name='register'),  # Class-based view
-    path('confirm-email/', confirm_email, name='confirm_email'),
+    path('register/', RegisterUserView.as_view(), name='register'),
+    path('confirm-email/', ConfirmEmailView.as_view(), name='confirm_email'),
     path('token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('token/refresh/', CustomTokenRefreshView.as_view(), name='token_refresh'),
 ]
