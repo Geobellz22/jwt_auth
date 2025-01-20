@@ -2,14 +2,15 @@ from django.conf import settings
 from django.core.mail import send_mail
 from rest_framework import status
 from rest_framework.permissions import AllowAny
-from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.generics import GenericAPIView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from account.models import User
 from account.serializers import UserSerializer, MyTokenObtainPairSerializer
 import random
 import re
 from drf_yasg.utils import swagger_auto_schema
+
 
 # Helper function to validate password strength
 def is_strong_password(password):
@@ -33,8 +34,9 @@ def is_strong_password(password):
     return False
 
 
-class RegisterUserView(APIView):
-    permission_classes = [AllowAny]  # Allow any user to access this endpoint
+class RegisterUserView(GenericAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = UserSerializer
 
     @swagger_auto_schema(request_body=UserSerializer)
     def post(self, request):
@@ -47,9 +49,9 @@ class RegisterUserView(APIView):
                 "error": "Password must be at least 8 characters long, contain uppercase, lowercase, digits, and special characters."
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        user_serializer = UserSerializer(data=data)
-        if user_serializer.is_valid():
-            user = user_serializer.save()
+        serializer = self.get_serializer(data=data)
+        if serializer.is_valid():
+            user = serializer.save()
 
             # Generate confirmation code
             confirmation_code = ''.join([str(random.randint(0, 9)) for _ in range(4)])
@@ -102,13 +104,13 @@ class RegisterUserView(APIView):
 
             return Response({
                 'message': 'Confirmation code sent successfully',
-                'user': user_serializer.data
+                'user': serializer.data
             }, status=status.HTTP_201_CREATED)
         
-        return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class ConfirmEmailView(APIView):
+class ConfirmEmailView(GenericAPIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
@@ -131,6 +133,5 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
 
 
-# Adding the CustomTokenRefreshView here
 class CustomTokenRefreshView(TokenRefreshView):
     pass  # No changes are required unless you need customization for the refresh token process
