@@ -2,6 +2,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework import serializers
 from account.models import User
 
+
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
@@ -14,6 +15,7 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['is_active'] = user.is_active
 
         return token
+
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -54,3 +56,21 @@ class UserSerializer(serializers.ModelSerializer):
         if self.instance:
             fields['email'].read_only = True
         return fields
+
+
+class ConfirmEmailSerializer(serializers.Serializer):
+    confirmation_code = serializers.CharField(max_length=4)
+
+    def validate_confirmation_code(self, value):
+        try:
+            user = User.objects.get(confirmation_code=value, is_active=False)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("Invalid or expired confirmation code.")
+        return user
+
+    def save(self):
+        user = self.validated_data['confirmation_code']
+        user.is_active = True
+        user.confirmation_code = ""
+        user.save()
+        return user
