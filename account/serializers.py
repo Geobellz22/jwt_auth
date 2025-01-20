@@ -45,7 +45,7 @@ class UserSerializer(serializers.ModelSerializer):
             dogecoin_wallet=validated_data.get('dogecoin_wallet'),
             usdt_erc20_wallet=validated_data.get('usdt_erc20_wallet'),
             bitcoin_cash_wallet=validated_data.get('bitcoin_cash_wallet'),
-            shiba_wallet=validated_data.get('shiba_wallet),
+            shiba_wallet=validated_data.get('shiba_wallet'),
         )
         
         user.set_password(validated_data['password'])
