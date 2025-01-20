@@ -7,6 +7,8 @@ from rest_framework.response import Response
 from drf_yasg.utils import swagger_auto_schema
 from django.core.mail import send_mail
 from django.contrib.auth import authenticate
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework import permissions
 from account.models import User
 from account.serializers import UserSerializer, MyTokenObtainPairSerializer
 import random
@@ -42,7 +44,7 @@ def register_user(request):
     user_serializer = UserSerializer(data=data)
     if user_serializer.is_valid():
         user = user_serializer.save()
-        
+
         # Generate and save confirmation code
         confirmation_code = ''.join(random.choices('0123456789', k=4))
         user.confirmation_code = confirmation_code
@@ -87,3 +89,8 @@ def confirm_email(request):
         return Response({"message": "Email confirmed successfully."}, status=status.HTTP_200_OK)
     except User.DoesNotExist:
         return Response({"message": "Invalid confirmation code."}, status=status.HTTP_400_BAD_REQUEST)
+
+# Custom Token Obtain Pair View
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
+    permission_classes = [permissions.AllowAny]  # You can adjust the permissions as necessary
