@@ -6,7 +6,11 @@ from rest_framework.response import Response
 from rest_framework.generics import GenericAPIView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from account.models import User
-from account.serializers import UserSerializer, MyTokenObtainPairSerializer
+from account.serializers import (
+    UserSerializer, 
+    MyTokenObtainPairSerializer, 
+    ConfirmEmailSerializer
+)
 import random
 import re
 from drf_yasg.utils import swagger_auto_schema
@@ -112,21 +116,15 @@ class RegisterUserView(GenericAPIView):
 
 class ConfirmEmailView(GenericAPIView):
     permission_classes = [AllowAny]
+    serializer_class = ConfirmEmailSerializer
 
+    @swagger_auto_schema(request_body=ConfirmEmailSerializer)
     def post(self, request):
-        confirmation_code = request.data.get('confirmation_code')
-
-        if not confirmation_code:
-            return Response({'message': 'Confirmation code is missing from the request.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            user = User.objects.get(confirmation_code=confirmation_code, is_active=False)
-            user.is_active = True
-            user.confirmation_code = ""
-            user.save()
-            return Response({'message': 'Email confirmation successful.'})
-        except User.DoesNotExist:
-            return Response({'message': 'Invalid confirmation code.'}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'message': 'Email confirmation successful.'}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
