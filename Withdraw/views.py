@@ -15,7 +15,7 @@ class WithdrawView(APIView):
         if not request.user.is_staff:
             serializer = WithdrawSerializer(data=request.data, context={'request': request})
             if serializer.is_valid():
-                # Withdrawal creation happens in serializer itself after validation
+                # Withdrawal creation happens in the serializer itself after validation
                 withdraw = serializer.save(user=request.user, status='pending')
                 return Response({
                     "message": "Withdrawal request created successfully",
