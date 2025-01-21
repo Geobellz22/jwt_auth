@@ -13,15 +13,17 @@ class WithdrawView(APIView):
     def post(self, request, format=None):
         # Regular User: Create new withdrawal request
         if not request.user.is_staff:
-            serializer = WithdrawSerializer(data=request.data)
+            serializer = WithdrawSerializer(data=request.data, context={'request': request})
             if serializer.is_valid():
-                if request.user.balance >= serializer.validated_data['amount']:
-                    withdraw = serializer.save(user=request.user, status='pending')
-                    return Response({"message": "Withdrawal request created successfully", "withdrawal_id": withdrawal.id}, status=status.HTTP_201_CREATED)
-                else:
-                    return Response({"error": "Insufficient balance"}, status=status.HTTP_400_BAD_REQUEST)
+                # Withdrawal creation happens in serializer itself after validation
+                withdraw = serializer.save(user=request.user, status='pending')
+                return Response({
+                    "message": "Withdrawal request created successfully",
+                    "withdrawal_id": withdraw.id
+                }, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
+        # Admin: Update withdrawal status
         if request.user.is_staff:
             withdraw_id = request.data.get('withdrawal_id')
             status_update = request.data.get('status')
@@ -43,4 +45,3 @@ class WithdrawView(APIView):
                 return Response({"message": f"Withdrawal status updated to {status_update}"}, status=status.HTTP_200_OK)
             else:
                 return Response({"error": "Invalid status. Must be 'processed' or 'rejected'"}, status=status.HTTP_400_BAD_REQUEST)
-
