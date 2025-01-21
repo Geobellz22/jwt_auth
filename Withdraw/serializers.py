@@ -8,12 +8,11 @@ class WithdrawSerializer(serializers.ModelSerializer):
         read_only_fields = ['status', 'transaction_id', 'created_at']
 
     def validate(self, data):
-        # Ensure the user has a profile and can access the balance
-        user_profile = self.context['request'].user.profile
-        if not user_profile:
+        # Ensure the request context is correctly passed for balance check
+        user_profile = self.context['request'].user.profile if hasattr(self.context['request'].user, 'profile') else None
+        if user_profile is None:
             raise serializers.ValidationError({'user': 'User profile not found'})
         
-        # Check for sufficient balance
         user_balance = user_profile.balance
         if data['amount'] > user_balance:
             raise serializers.ValidationError({'amount': 'Insufficient balance for this withdrawal'})
