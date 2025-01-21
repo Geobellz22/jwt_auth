@@ -1,20 +1,28 @@
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
-from .models import ContactUs
+from rest_framework.generics import CreateAPIView
+from rest_framework.permissions import AllowAny
 from django.core.mail import send_mail
-from .serializers import ContactUsSerializer
 from django.conf import settings
+from .models import ContactUs
+from .serializers import ContactUsSerializer
 
-@api_view(['POST'])
-def contact_us(request):
-    serializer = ContactUsSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
+class ContactUsView(CreateAPIView):
+    """
+    API view to handle 'Contact Us' requests.
+    """
+    queryset = ContactUs.objects.all()
+    serializer_class = ContactUsSerializer
+    permission_classes = [AllowAny]
 
-        subject = serializer.validated_data.get('subject')
-        message = serializer.validated_data.get('message')
-        from_email = serializer.validated_data.get('email')
+    def perform_create(self, serializer):
+        # Save the contact form data
+        contact = serializer.save()
+
+        # Prepare email details
+        subject = contact.subject
+        message = contact.message
+        from_email = contact.email
 
         try:
             # Sending acknowledgment email to the user
@@ -26,6 +34,7 @@ def contact_us(request):
                 fail_silently=False,
             )
 
+            # Forwarding the message to the support team
             send_mail(
                 subject,  
                 message,  
@@ -35,8 +44,6 @@ def contact_us(request):
             )
 
         except Exception as e:
-            return Response({'error': 'Something went wrong, please try again'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            raise Exception("Email sending failed. Please try again later.")
 
-        return Response({'success': 'Message sent successfully'}, status=status.HTTP_201_CREATED)
-
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        # Optionally, log or notify the admin
