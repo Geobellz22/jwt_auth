@@ -5,6 +5,7 @@ from .models import Deposit
 from .serializers import DepositSerializer
 
 class YourDeposit(APIView):
+     serializer_class = YourDepositSerializer
     """
     View to retrieve confirmed deposits for the authenticated user.
     """
