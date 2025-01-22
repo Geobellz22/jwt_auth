@@ -5,13 +5,23 @@ from .models import Deposit
 from .serializers import DepositSerializer
 
 class YourDeposit(APIView):
+    """
+    View to retrieve confirmed deposits for the authenticated user.
+    """
     def get(self, request):
         user = request.user
-        deposits = Deposits.objects.filter(user=user, status='confirmed')
         
-        total_deposit = sum(deposit.amount for deposit in deposits)
+        # Fetch all confirmed deposits for the user
+        deposits = Deposit.objects.filter(user=user, status='confirmed')
         
-        return Response({
-            'total_deposit': total_deposit,
-             'deposits': DepositSerializer(deposits, many=True).data
-        })
+        # Calculate total deposit directly in the database
+        total_deposit = deposits.aggregate(total=models.Sum('amount'))['total'] or 0
+
+        # Serialize the deposits and return the response
+        return Response(
+            {
+                'total_deposit': total_deposit,
+                'deposits': DepositSerializer(deposits, many=True).data
+            },
+            status=status.HTTP_200_OK
+        )
