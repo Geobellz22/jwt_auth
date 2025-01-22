@@ -2,11 +2,11 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Deposit
-from .serializers import DepositSerializer
+from .serializers import YourDepositSerializer
 from django.db.models import Sum  
 
 class YourDeposit(APIView):
-    serializer_class = DepositSerializer
+    serializer_class = YourDepositSerializer
     """
     View to retrieve confirmed deposits for the authenticated user.
     """
