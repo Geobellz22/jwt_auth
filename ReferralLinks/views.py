@@ -14,7 +14,7 @@ class ReferralLinkView(APIView):
     def get(self, request, format=None):
         try:
             # Retrieve the referral link for the logged-in user
-            referral_link = ReferralLink.objects.get(user=request.user)
+            referral_link = ReferralLink.objects.get(referred_user=request.user)  # Fixed field name
             serializer = ReferralLinkSerializer(referral_link)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except ReferralLink.DoesNotExist:
