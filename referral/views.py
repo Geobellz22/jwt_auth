@@ -1,5 +1,6 @@
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.contrib.auth import get_user_model
 from .models import Referral, ReferralReward
@@ -7,7 +8,9 @@ from .serializers import ReferralSerializer, ReferralRewardSerializer
 
 User = get_user_model()
 
+# Updated create_referral view to use proper serializer handling
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])  # Ensure only authenticated users can create referrals
 def create_referral(request):
     """
     Create a new referral entry.
@@ -30,6 +33,13 @@ def create_referral(request):
             status=status.HTTP_404_NOT_FOUND
         )
 
+    # Ensure the referrer is creating the referral for a valid referred user
+    if referrer == referred:
+        return Response(
+            {'error': 'Referrer cannot refer themselves'}, 
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
     if Referral.objects.filter(referrer=referrer, referred=referred).exists():
         return Response(
             {'error': 'Referral already exists'}, 
@@ -43,6 +53,8 @@ def create_referral(request):
         for level, percentage in enumerate([4, 6, 8, 10], start=1)
     ]
     ReferralReward.objects.bulk_create(rewards)
+
+    # Serialize the referral object for the response
     referral_serializer = ReferralSerializer(referral)
 
     return Response(
@@ -54,7 +66,9 @@ def create_referral(request):
     )
 
 
+# Updated get_referral_rewards view to use proper serializer handling
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])  # Ensure the user is authenticated to access their rewards
 def get_referral_rewards(request, user_id):
     """
     Retrieve referral rewards for a given user.
@@ -67,8 +81,13 @@ def get_referral_rewards(request, user_id):
             status=status.HTTP_404_NOT_FOUND
         )
 
+    # Fetch the referrals made by the user
     referrals = Referral.objects.filter(referrer=user)
+    
+    # Fetch the rewards associated with those referrals
     rewards = ReferralReward.objects.filter(referral__in=referrals)
+    
+    # Serialize the rewards for the response
     reward_serializer = ReferralRewardSerializer(rewards, many=True)
 
     return Response(reward_serializer.data, status=status.HTTP_200_OK)
