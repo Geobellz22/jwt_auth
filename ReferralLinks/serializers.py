@@ -7,9 +7,14 @@ class ReferralLinkSerializer(serializers.ModelSerializer):
     class Meta:
         model = ReferralLink
         fields = ['id', 'referred_user', 'referral_link', 'referral_code', 'created_at', 'reward_granted']
-        read_only_fields = ('referred_user', 'referral_code', 'created_at', 'reward_granted')
+        read_only_fields = ('referral_code', 'created_at', 'reward_granted')
 
-    def get_referral_link(self, obj):
-        # Generate the full referral link using referral_code
-        from django.conf import settings
-        return f"{settings.SITE_URL}/referral/{obj.referral_code}"
+    def get_referral_link(self, obj) -> str:
+        """
+        Generate the full referral link for the given object.
+        """
+        request = self.context.get('request')
+        if request is not None:
+            # Example: Generating the referral link with a base URL
+            return f"{request.scheme}://{request.get_host()}/referral/{obj.referral_code}"
+        return ""
