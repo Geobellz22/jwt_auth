@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import User
 from django.utils import timezone
-
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -40,7 +40,16 @@ class UserCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user = User.objects.create_user(**validated_data)
         return user
-
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    """
+    Custom JWT serializer that can add more fields or customization to the token.
+    """
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        
+        # Optionally add custom claims or data to the response here
+        data['username'] = self.user.username
+        data['email'] = self.user.email
 
 class ConfirmationCodeSerializer(serializers.Serializer):
     email = serializers.EmailField()
