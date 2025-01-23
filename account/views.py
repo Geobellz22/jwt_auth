@@ -11,7 +11,8 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from account.models import User
 from account.serializers import (
     UserSerializer, 
-    ConfirmationCodeSerializer
+    MyTokenObtainPairSerializer, 
+    ConfirmEmailSerializer
 )
 import re
 from drf_yasg.utils import swagger_auto_schema
