@@ -1,4 +1,4 @@
- from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework import serializers
 from django.utils import timezone
 from account.models import User
