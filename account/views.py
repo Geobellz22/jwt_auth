@@ -11,7 +11,6 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from account.models import User
 from account.serializers import (
     UserSerializer, 
-    MyTokenObtainPairSerializer, 
     ConfirmEmailSerializer
 )
 import re
