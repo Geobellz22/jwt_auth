@@ -9,7 +9,7 @@ from django.utils.crypto import get_random_string
 from django.conf import settings
 from .models import Security
 from .serializers import SecuritySerializer
-rom rest_framework.authentication import TokenAuthentication
+from rest_framework.authentication import TokenAuthentication
 from django.contrib.auth import authenticate
 
 # View for updating security settings (IP address sensitivity, device change detection, etc.)
