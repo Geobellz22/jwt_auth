@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 class WithdrawView(APIView):
     permission_classes = [IsAuthenticated]
-
+    serializer_class = WithdrawSerializer  
     def post(self, request, format=None):
         user = request.user
         logger.debug(f"User: {user.username}, Data: {request.data}")
