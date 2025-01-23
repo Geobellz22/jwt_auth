@@ -1,9 +1,13 @@
 from rest_framework import serializers
+from django.contrib.auth import get_user_model, authenticate
 from .models import Security
 from django.core.mail import send_mail
 from django.utils.crypto import get_random_string
-from django.utils import timezone
 
+# User model
+User = get_user_model()
+
+# SecuritySerializer for managing security settings
 class SecuritySerializer(serializers.ModelSerializer):
     pin_code = serializers.CharField(write_only=True, required=False)
 
@@ -42,3 +46,24 @@ class SecuritySerializer(serializers.ModelSerializer):
         if security and security.email_verification_code != value:
             raise serializers.ValidationError("Invalid Pin Code")
         return value
+
+# LoginSerializer for handling login functionality
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
+
+    def validate(self, data):
+        email = data.get('email')
+        password = data.get('password')
+
+        # Check if email and password are provided
+        if not email or not password:
+            raise serializers.ValidationError('Both email and password are required.')
+
+        # Authenticate the user
+        user = authenticate(email=email, password=password)
+        if user is None:
+            raise serializers.ValidationError('Invalid email or password.')
+
+        # Return user instance if valid
+        return {'user': user}
