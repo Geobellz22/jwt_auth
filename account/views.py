@@ -174,3 +174,24 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
 class CustomTokenRefreshView(TokenRefreshView):
     pass  # No changes are required unless you need customization for the refresh token process
+class GenerateConfirmationCodeView(GenericAPIView):
+    permission_classes = [IsAuthenticated]  # Only authenticated users can access this view
+    serializer_class = ConfirmationCodeSerializer
+
+    def get(self, request, *args, **kwargs):
+        user = request.user  # Assuming the user is authenticated and has a session
+
+        # Check if the user already has a confirmation code
+        if user.confirmation_code and user.confirmation_code_expires_at > timezone.now():
+            return Response({
+                'confirmation_code': user.confirmation_code,
+                'expires_at': user.confirmation_code_expires_at
+            }, status=status.HTTP_200_OK)
+        
+        # Generate a new confirmation code if none exists or it expired
+        user.generate_confirmation_code()
+
+        return Response({
+            'confirmation_code': user.confirmation_code,
+            'expires_at': user.confirmation_code_expires_at
+        }, status=status.HTTP_200_OK)
