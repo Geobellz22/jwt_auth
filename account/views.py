@@ -1,5 +1,8 @@
+import random
+import string
 from django.conf import settings
 from django.core.mail import send_mail
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -11,12 +14,10 @@ from account.serializers import (
     MyTokenObtainPairSerializer, 
     ConfirmEmailSerializer
 )
-import random
 import re
 from drf_yasg.utils import swagger_auto_schema
 
-
-# Helper function to validate password strength
+# Existing password strength validation remains the same
 def is_strong_password(password):
     """
     Validates if a password is strong.
@@ -37,7 +38,6 @@ def is_strong_password(password):
         return True
     return False
 
-
 class RegisterUserView(GenericAPIView):
     permission_classes = [AllowAny]
     serializer_class = UserSerializer
@@ -57,9 +57,19 @@ class RegisterUserView(GenericAPIView):
         if serializer.is_valid():
             user = serializer.save()
 
-            # Generate confirmation code
-            confirmation_code = ''.join([str(random.randint(0, 9)) for _ in range(4)])
+            # Generate more secure confirmation code
+            confirmation_code = ''.join(random.choices(
+                string.ascii_uppercase + string.digits, 
+                k=7  # 7-character code
+            ))
+            
+            # Add expiration time
+            code_expiration = timezone.now() + timezone.timedelta(minutes=4)
+            
+            # Save confirmation details
             user.confirmation_code = confirmation_code
+            user.confirmation_code_expires_at = code_expiration
+            user.is_verified = False  # Add a verification flag
             user.save()
 
             # Send email to user with confirmation code
@@ -69,50 +79,62 @@ class RegisterUserView(GenericAPIView):
 
             Thank you for Registering with us.
 
-            Your Confirmation Code is {confirmation_code}.
+            Your Email Confirmation Code is: {confirmation_code}
+            
+            This code will expire in 4 minutes.
+
+            If you did not request this, please ignore this email.
             """
-            send_mail(
-                email_subject,
-                email_message,
-                settings.DEFAULT_FROM_EMAIL,
-                [user.email],
-                fail_silently=False
-            )
+            
+            try:
+                send_mail(
+                    email_subject,
+                    email_message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [user.email],
+                    fail_silently=False
+                )
 
-            # Send user details to support email
-            support_email_subject = 'New User Registration Details'
-            support_email_message = f"""
-            A new user has registered:
+                # Send user details to support email
+                support_email_subject = 'New User Registration Details'
+                support_email_message = f"""
+                A new user has registered:
 
-            Username: {user.username}
-            Email: {user.email}
+                Username: {user.username}
+                Email: {user.email}
 
-            Wallet Details:
-            - Bitcoin Wallet: {getattr(user, 'bitcoin_wallet', 'Not provided')}
-            - Tether USDT TRC20 Wallet: {getattr(user, 'tether_usdt_trc20_wallet', 'Not provided')}
-            - Tron Wallet: {getattr(user, 'tron_wallet', 'Not provided')}
-            - Ethereum Wallet: {getattr(user, 'ethereum_wallet', 'Not provided')}
-            - BNB Wallet: {getattr(user, 'bnb_wallet', 'Not provided')}
-            - Dogecoin Wallet: {getattr(user, 'dogecoin_wallet', 'Not provided')}
-            - USDT ERC20 Wallet: {getattr(user, 'usdt_erc20_wallet', 'Not provided')}
-            - Bitcoin Cash Wallet: {getattr(user, 'bitcoin_cash_wallet', 'Not provided')}
-            - Shiba Wallet: {getattr(user, 'shiba_wallet', 'Not provided')}
-            """
-            send_mail(
-                support_email_subject,
-                support_email_message,
-                settings.DEFAULT_FROM_EMAIL,
-                ['support@matrixmomentum.com'],
-                fail_silently=False
-            )
+                Wallet Details:
+                - Bitcoin Wallet: {getattr(user, 'bitcoin_wallet', 'Not provided')}
+                - Tether USDT TRC20 Wallet: {getattr(user, 'tether_usdt_trc20_wallet', 'Not provided')}
+                - Tron Wallet: {getattr(user, 'tron_wallet', 'Not provided')}
+                - Ethereum Wallet: {getattr(user, 'ethereum_wallet', 'Not provided')}
+                - BNB Wallet: {getattr(user, 'bnb_wallet', 'Not provided')}
+                - Dogecoin Wallet: {getattr(user, 'dogecoin_wallet', 'Not provided')}
+                - USDT ERC20 Wallet: {getattr(user, 'usdt_erc20_wallet', 'Not provided')}
+                - Bitcoin Cash Wallet: {getattr(user, 'bitcoin_cash_wallet', 'Not provided')}
+                - Shiba Wallet: {getattr(user, 'shiba_wallet', 'Not provided')}
+                """
+                send_mail(
+                    support_email_subject,
+                    support_email_message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    ['support@matrixmomentum.com'],
+                    fail_silently=False
+                )
 
-            return Response({
-                'message': 'Confirmation code sent successfully',
-                'user': serializer.data
-            }, status=status.HTTP_201_CREATED)
+                return Response({
+                    'message': 'Confirmation code sent successfully',
+                    'user_id': user.id  # Send user ID for frontend to use
+                }, status=status.HTTP_201_CREATED)
+            
+            except Exception as e:
+                # Handle email sending failure
+                user.delete()  # Rollback user creation
+                return Response({
+                    'error': 'Failed to send confirmation email. Please try again.'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 class ConfirmEmailView(GenericAPIView):
     permission_classes = [AllowAny]
@@ -120,16 +142,35 @@ class ConfirmEmailView(GenericAPIView):
 
     @swagger_auto_schema(request_body=ConfirmEmailSerializer)
     def post(self, request):
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({'message': 'Email confirmation successful.'}, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        user_id = request.data.get('user_id')
+        confirmation_code = request.data.get('confirmation_code')
 
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return Response({
+                'error': 'Invalid user'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check code expiration and validity
+        if (user.confirmation_code_expires_at < timezone.now() or 
+            user.confirmation_code != confirmation_code):
+            return Response({
+                'error': 'Invalid or expired confirmation code'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Mark user as verified
+        user.is_verified = True
+        user.confirmation_code = None
+        user.confirmation_code_expires_at = None
+        user.save()
+
+        return Response({
+            'message': 'Email confirmation successful'
+        }, status=status.HTTP_200_OK)
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
-
 
 class CustomTokenRefreshView(TokenRefreshView):
     pass  # No changes are required unless you need customization for the refresh token process
