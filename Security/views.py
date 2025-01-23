@@ -9,6 +9,8 @@ from django.utils.crypto import get_random_string
 from django.conf import settings
 from .models import Security
 from .serializers import SecuritySerializer
+rom rest_framework.authentication import TokenAuthentication
+from django.contrib.auth import authenticate
 
 # View for updating security settings (IP address sensitivity, device change detection, etc.)
 class SecuritySettingsView(generics.UpdateAPIView):
@@ -47,17 +49,30 @@ class SecuritySettingsView(generics.UpdateAPIView):
 
 # View for logging in the user with pin code validation based on security settings
 class LoginView(APIView):
+    serializer_class = LoginSerializer
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [TokenAuthentication]
+
     def post(self, request, *args, **kwargs):
-        username = request.data.get('username')
-        password = request.data.get('password')
+        # Use the LoginSerializer to validate the request data
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        # Extract validated data from the serializer
+        username = serializer.validated_data['email']  # Login uses email instead of username
+        password = serializer.validated_data['password']
         pin_code = request.data.get('pin_code')
 
-        # Authenticate user with provided credentials
+        # Authenticate the user using email and password
         user = authenticate(request, username=username, password=password)
 
         if user:
             # Retrieve the associated security instance
-            security_instance = Security.objects.get(user=user)
+            try:
+                security_instance = Security.objects.get(user=user)
+            except Security.DoesNotExist:
+                return Response({'error': 'Security instance not found for the user'}, status=status.HTTP_404_NOT_FOUND)
 
             # If IP address sensitivity is enabled, proceed with pin code verification
             if security_instance.ip_address_sensitivity != 'disabled':
@@ -71,7 +86,7 @@ class LoginView(APIView):
                         return Response({'token': token.key}, status=status.HTTP_200_OK)
                     return Response({'error': 'Invalid Pin Code'}, status=status.HTTP_403_FORBIDDEN)
                 return Response({'error': 'Pin Code required for this attempt'}, status=status.HTTP_403_FORBIDDEN)
-            
+
             # If IP address sensitivity is disabled, just provide the token without pin code
             token, created = Token.objects.get_or_create(user=user)
             return Response({'token': token.key}, status=status.HTTP_200_OK)
