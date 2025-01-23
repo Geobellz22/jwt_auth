@@ -11,6 +11,7 @@ from .models import Security
 from .serializers import SecuritySerializer
 from rest_framework.authentication import TokenAuthentication
 from django.contrib.auth import authenticate
+from .serializers import LoginSerializer
 
 # View for updating security settings (IP address sensitivity, device change detection, etc.)
 class SecuritySettingsView(generics.UpdateAPIView):
