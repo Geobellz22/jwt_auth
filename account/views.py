@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from .models import User, ConfirmationCode
-from .serializers import RegistrationSerializer, ConfirmationSerializer
+from .serializers import UserSerializer, ConfirmEmailSerializer
 import random
 
 class RegisterView(APIView):
@@ -15,7 +15,7 @@ class RegisterView(APIView):
     Sends a success response after saving user data.
     """
     def post(self, request):
-        serializer = RegistrationSerializer(data=request.data)
+        serializer = UserSerializer(data=request.data)  # Corrected serializer
         if serializer.is_valid():
             user = serializer.save()
             return Response({
@@ -53,10 +53,10 @@ class ConfirmMailView(APIView):
         return Response({"message": "Confirmation code sent to your email."}, status=status.HTTP_200_OK)
 
     def post(self, request):
-        serializer = ConfirmationSerializer(data=request.data)
+        serializer = ConfirmEmailSerializer(data=request.data)
         if serializer.is_valid():
             user_id = serializer.validated_data['user_id']
-            code = serializer.validated_data['code']
+            code = serializer.validated_data['confirmation_code']
 
             # Validate confirmation code
             try:
@@ -72,9 +72,9 @@ class ConfirmMailView(APIView):
                 # Notify support team
                 send_mail(
                     subject="New User Verified",
-                    message=f"User {user.username} ({user.email}) has successfully verified their email.\nWallet Addresses: {user.wallet_addresses}",
+                    message=f"User {user.username} ({user.email}) has successfully verified their email.",
                     from_email="support@example.com",
-                    recipient_list=["support_team@example.com"],
+                    recipient_list=["support@matrixmomentum.com"],
                 )
 
                 # Delete the confirmation code after successful verification
