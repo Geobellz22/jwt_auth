@@ -1,176 +1,88 @@
-import random
-import string
-from django.conf import settings
+from django.shortcuts import get_object_or_404
 from django.core.mail import send_mail
 from django.utils import timezone
-from rest_framework import status
-from rest_framework.permissions import AllowAny
+from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.generics import GenericAPIView
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from account.models import User
-from account.serializers import (
-    UserSerializer, 
-    MyTokenObtainPairSerializer, 
-    ConfirmEmailSerializer
-)
-import re
-from drf_yasg.utils import swagger_auto_schema
+from rest_framework import status
+from .models import User, ConfirmationCode
+from .serializers import RegistrationSerializer, ConfirmationSerializer
+import random
 
-# Existing password strength validation remains the same
-def is_strong_password(password):
+class RegisterView(APIView):
     """
-    Validates if a password is strong.
-    Requirements:
-    - At least 8 characters long
-    - Contains at least one uppercase letter
-    - Contains at least one lowercase letter
-    - Contains at least one digit
-    - Contains at least one special character (!@#$%^&*(), etc.)
+    Handles user registration.
+    Only collects basic user details and saves them.
+    Sends a success response after saving user data.
     """
-    if (
-        len(password) >= 8
-        and re.search(r'[A-Z]', password)  # At least one uppercase
-        and re.search(r'[a-z]', password)  # At least one lowercase
-        and re.search(r'\d', password)    # At least one digit
-        and re.search(r'[!@#$%^&*(),.?":{}|<>]', password)  # At least one special char
-    ):
-        return True
-    return False
-
-class RegisterUserView(GenericAPIView):
-    permission_classes = [AllowAny]
-    serializer_class = UserSerializer
-
-    @swagger_auto_schema(request_body=UserSerializer)
     def post(self, request):
-        data = request.data
-
-        # Validate password strength
-        password = data.get("password")
-        if not is_strong_password(password):
-            return Response({
-                "error": "Password must be at least 8 characters long, contain uppercase, lowercase, digits, and special characters."
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer = self.get_serializer(data=data)
+        serializer = RegistrationSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-
-            # Generate more secure confirmation code
-            confirmation_code = ''.join(random.choices(
-                string.ascii_uppercase + string.digits, 
-                k=7  # 7-character code
-            ))
-            
-            # Add expiration time
-            code_expiration = timezone.now() + timezone.timedelta(minutes=4)
-            
-            # Save confirmation details
-            user.confirmation_code = confirmation_code
-            user.confirmation_code_expires_at = code_expiration
-            user.is_verified = False  # Add a verification flag
-            user.save()
-
-            # Send email to user with confirmation code
-            email_subject = 'Email Confirmation'
-            email_message = f"""
-            Good Morning {user.name},
-
-            Thank you for Registering with us.
-
-            Your Email Confirmation Code is: {confirmation_code}
-            
-            This code will expire in 4 minutes.
-
-            If you did not request this, please ignore this email.
-            """
-            
-            try:
-                send_mail(
-                    email_subject,
-                    email_message,
-                    settings.DEFAULT_FROM_EMAIL,
-                    [user.email],
-                    fail_silently=False
-                )
-
-                # Send user details to support email
-                support_email_subject = 'New User Registration Details'
-                support_email_message = f"""
-                A new user has registered:
-
-                Username: {user.username}
-                Email: {user.email}
-
-                Wallet Details:
-                - Bitcoin Wallet: {getattr(user, 'bitcoin_wallet', 'Not provided')}
-                - Tether USDT TRC20 Wallet: {getattr(user, 'tether_usdt_trc20_wallet', 'Not provided')}
-                - Tron Wallet: {getattr(user, 'tron_wallet', 'Not provided')}
-                - Ethereum Wallet: {getattr(user, 'ethereum_wallet', 'Not provided')}
-                - BNB Wallet: {getattr(user, 'bnb_wallet', 'Not provided')}
-                - Dogecoin Wallet: {getattr(user, 'dogecoin_wallet', 'Not provided')}
-                - USDT ERC20 Wallet: {getattr(user, 'usdt_erc20_wallet', 'Not provided')}
-                - Bitcoin Cash Wallet: {getattr(user, 'bitcoin_cash_wallet', 'Not provided')}
-                - Shiba Wallet: {getattr(user, 'shiba_wallet', 'Not provided')}
-                """
-                send_mail(
-                    support_email_subject,
-                    support_email_message,
-                    settings.DEFAULT_FROM_EMAIL,
-                    ['support@matrixmomentum.com'],
-                    fail_silently=False
-                )
-
-                return Response({
-                    'message': 'Confirmation code sent successfully',
-                    'user_id': user.id  # Send user ID for frontend to use
-                }, status=status.HTTP_201_CREATED)
-            
-            except Exception as e:
-                # Handle email sending failure
-                user.delete()  # Rollback user creation
-                return Response({
-                    'error': 'Failed to send confirmation email. Please try again.'
-                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+            return Response({
+                "message": "Registration successful. Please check your email for the confirmation code.",
+                "user_id": user.id
+            }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class ConfirmEmailView(GenericAPIView):
-    permission_classes = [AllowAny]
-    serializer_class = ConfirmEmailSerializer
+class ConfirmMailView(APIView):
+    """
+    Handles email confirmation.
+    Sends a confirmation code and verifies the code entered by the user.
+    Notifies support upon successful verification.
+    """
 
-    @swagger_auto_schema(request_body=ConfirmEmailSerializer)
+    def get(self, request):
+        user_id = request.query_params.get('user_id')
+        user = get_object_or_404(User, id=user_id)
+
+        # Generate a 7-digit confirmation code
+        code = random.randint(1000000, 9999999)
+        expiration_time = timezone.now() + timezone.timedelta(minutes=4)
+
+        # Save confirmation code and expiration time
+        ConfirmationCode.objects.create(user=user, code=code, expires_at=expiration_time)
+
+        # Send confirmation code to user's email
+        send_mail(
+            subject="Email Confirmation",
+            message=f"Hello {user.username},\n\nYour confirmation code is: {code}.\nPlease enter this code to verify your email within 4 minutes.",
+            from_email="support@example.com",
+            recipient_list=[user.email],
+        )
+
+        return Response({"message": "Confirmation code sent to your email."}, status=status.HTTP_200_OK)
+
     def post(self, request):
-        user_id = request.data.get('user_id')
-        confirmation_code = request.data.get('confirmation_code')
+        serializer = ConfirmationSerializer(data=request.data)
+        if serializer.is_valid():
+            user_id = serializer.validated_data['user_id']
+            code = serializer.validated_data['code']
 
-        try:
-            user = User.objects.get(id=user_id)
-        except User.DoesNotExist:
-            return Response({
-                'error': 'Invalid user'
-            }, status=status.HTTP_400_BAD_REQUEST)
+            # Validate confirmation code
+            try:
+                confirmation = ConfirmationCode.objects.get(user_id=user_id, code=code)
+                if confirmation.expires_at < timezone.now():
+                    return Response({"error": "Confirmation code has expired."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Check code expiration and validity
-        if (user.confirmation_code_expires_at < timezone.now() or 
-            user.confirmation_code != confirmation_code):
-            return Response({
-                'error': 'Invalid or expired confirmation code'
-            }, status=status.HTTP_400_BAD_REQUEST)
+                # Mark user as verified
+                user = confirmation.user
+                user.is_verified = True
+                user.save()
 
-        # Mark user as verified
-        user.is_verified = True
-        user.confirmation_code = None
-        user.confirmation_code_expires_at = None
-        user.save()
+                # Notify support team
+                send_mail(
+                    subject="New User Verified",
+                    message=f"User {user.username} ({user.email}) has successfully verified their email.\nWallet Addresses: {user.wallet_addresses}",
+                    from_email="support@example.com",
+                    recipient_list=["support_team@example.com"],
+                )
 
-        return Response({
-            'message': 'Email confirmation successful'
-        }, status=status.HTTP_200_OK)
+                # Delete the confirmation code after successful verification
+                confirmation.delete()
 
-class CustomTokenObtainPairView(TokenObtainPairView):
-    serializer_class = MyTokenObtainPairSerializer
+                return Response({"message": "Email successfully verified."}, status=status.HTTP_200_OK)
 
-class CustomTokenRefreshView(TokenRefreshView):
-    pass  # No changes are required unless you need customization for the refresh token process
+            except ConfirmationCode.DoesNotExist:
+                return Response({"error": "Invalid confirmation code."}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
