@@ -48,9 +48,8 @@ class User(AbstractUser):
     tether_erc20_wallet = models.CharField(max_length=250, blank=True, null=True)
     shiba_wallet = models.CharField(max_length=250, blank=True, null=True)
 
-    # Confirmation code fields
-    confirmation_code = models.CharField(max_length=7, blank=True, null=True)
-    confirmation_code_expires_at = models.DateTimeField(null=True, blank=True)
+    # Confirmation code relationship
+    confirmation_code = models.OneToOneField('ConfirmationCode', on_delete=models.SET_NULL, null=True, blank=True)
 
     groups = models.ManyToManyField(
         'auth.Group',
@@ -80,19 +79,29 @@ class User(AbstractUser):
 
     def save(self, *args, **kwargs):
         if not self.pk and not self.confirmation_code:  # New user logic
-            self.confirmation_code = f"{random.randint(1000000, 9999999)}"
-            self.confirmation_code_expires_at = timezone.now() + timezone.timedelta(hours=24)
+            confirmation = ConfirmationCode.objects.create(user=self)
+            self.confirmation_code = confirmation
         super().save(*args, **kwargs)
 
-    def is_confirmation_code_valid(self, code):
-        return (
-            self.confirmation_code == code and
-            self.confirmation_code_expires_at and
-            self.confirmation_code_expires_at > timezone.now()
-        )
 
-    def invalidate_confirmation_code(self):
-        self.confirmation_code = None
-        self.confirmation_code_expires_at = None
-        self.is_verified = True
+class ConfirmationCode(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    code = models.CharField(max_length=7)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    is_used = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f'Confirmation Code for {self.user.username}'
+
+    def generate_code(self):
+        self.code = f"{random.randint(1000000, 9999999)}"
+        self.expires_at = timezone.now() + timezone.timedelta(hours=24)
+        self.save()
+
+    def is_valid(self):
+        return self.code and not self.is_used and self.expires_at > timezone.now()
+
+    def invalidate(self):
+        self.is_used = True
         self.save()
