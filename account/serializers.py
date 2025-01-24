@@ -1,8 +1,6 @@
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework import serializers
 from account.models import User, ConfirmationCode
-import random
-import string
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -32,7 +30,7 @@ class UserSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'password': {'write_only': True},
             'email': {'required': True},
-            'username': {'required': True}
+            'username': {'required': True},
         }
 
     def create(self, validated_data):
