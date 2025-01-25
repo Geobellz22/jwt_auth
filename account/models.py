@@ -48,9 +48,6 @@ class User(AbstractUser):
     tether_erc20_wallet = models.CharField(max_length=250, blank=True, null=True)
     shiba_wallet = models.CharField(max_length=250, blank=True, null=True)
 
-    # Confirmation code relationship
-    confirmation_code = models.OneToOneField('ConfirmationCode', on_delete=models.SET_NULL, null=True, blank=True)
-
     groups = models.ManyToManyField(
         'auth.Group',
         related_name='custom_user_set',
@@ -77,15 +74,13 @@ class User(AbstractUser):
     def __str__(self):
         return f'User {self.username} - {self.email}'
 
-    def save(self, *args, **kwargs):
-        if not self.pk and not self.confirmation_code:  # New user logic
-            confirmation = ConfirmationCode.objects.create(user=self)
-            self.confirmation_code = confirmation
-        super().save(*args, **kwargs)
-
 
 class ConfirmationCode(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name='confirmation_code'  # Unique related_name
+    )
     code = models.CharField(max_length=7)
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
@@ -95,13 +90,16 @@ class ConfirmationCode(models.Model):
         return f'Confirmation Code for {self.user.username}'
 
     def generate_code(self):
+        """Generates a new confirmation code and updates expiration time."""
         self.code = f"{random.randint(1000000, 9999999)}"
         self.expires_at = timezone.now() + timezone.timedelta(hours=24)
         self.save()
 
     def is_valid(self):
+        """Checks if the confirmation code is still valid."""
         return self.code and not self.is_used and self.expires_at > timezone.now()
 
     def invalidate(self):
+        """Marks the confirmation code as used."""
         self.is_used = True
         self.save()
