@@ -4,9 +4,11 @@ from django.utils import timezone
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .models import User, ConfirmationCode
-from .serializers import UserSerializer, ConfirmEmailSerializer
+from .serializers import UserSerializer, ConfirmEmailSerializer, MyTokenObtainPairSerializer
 import random
+
 
 class RegisterView(APIView):
     """
@@ -15,7 +17,7 @@ class RegisterView(APIView):
     Sends a success response after saving user data.
     """
     def post(self, request):
-        serializer = UserSerializer(data=request.data)  # Corrected serializer
+        serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
             return Response({
@@ -24,13 +26,13 @@ class RegisterView(APIView):
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class ConfirmMailView(APIView):
     """
     Handles email confirmation.
     Sends a confirmation code and verifies the code entered by the user.
     Notifies support upon successful verification.
     """
-
     def get(self, request):
         user_id = request.query_params.get('user_id')
         user = get_object_or_404(User, id=user_id)
@@ -86,3 +88,17 @@ class ConfirmMailView(APIView):
                 return Response({"error": "Invalid confirmation code."}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    """
+    Custom token obtain pair view to include additional fields in the token response.
+    """
+    serializer_class = MyTokenObtainPairSerializer
+
+
+class CustomTokenRefreshView(TokenRefreshView):
+    """
+    Custom token refresh view.
+    """
+    pass
