@@ -32,7 +32,7 @@ class RegisterView(APIView):
 
 
 class ConfirmMailView(APIView):
-    serializer_class = ConfirmMailSerializer
+    serializer_class = ConfirmEMailSerializer
     """
     Handles email confirmation.
     Sends a confirmation code and verifies the code entered by the user.
