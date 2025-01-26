@@ -14,7 +14,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 class RegisterView(APIView):
-    serializer_class = RegisterSerializer 
+    serializer_class = UserSerializer 
     """
     Handles user registration.
     Only collects basic user details and saves them.
