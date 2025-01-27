@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 from datetime import timedelta
 from decouple import config
-REDIS_URL = config('REDIS_URL', default=None)
+REDIS_URL = config('REDIS_URL', default='redis://localhost:6379')
 # Build paths inside the project
 BASE_DIR = Path(__file__).resolve().parent.parent
 
