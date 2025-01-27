@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 from datetime import timedelta
 from decouple import config
-REDIS_URL = config('REDIS_URL', default=None)
+REDIS_URL = config('REDIS_URL', default='redis://localhost:6379')
 # Build paths inside the project
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -89,17 +89,15 @@ TEMPLATES = [
     },
 ]
 
-# Channels settings
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            'hosts': [
-                config('REDIS_URL')
-            ],
+            "hosts": [(REDIS_URL, 6379)],
         },
     },
 }
+
 
 # REST Framework settings
 REST_FRAMEWORK = {
