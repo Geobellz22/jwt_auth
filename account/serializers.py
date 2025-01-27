@@ -1,7 +1,7 @@
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework import serializers
 from account.models import User, ConfirmationCode
-
+from rest_framework.exceptions import AuthenticationFailed
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
@@ -14,7 +14,31 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['is_active'] = user.is_active
         token['is_verified'] = user.is_verified
         return token
+    def validate(self, attrs):
+        username = attrs.get('username', None)
+        password = attrs.get('password', None)
 
+        if username is None or password is None:
+            raise AuthenticationFailed("Username and password are required.")
+
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            raise AuthenticationFailed("No user found with this username.")
+
+        if not user.check_password(password):
+            raise AuthenticationFailed("Invalid password.")
+
+        if not user.is_active:
+            raise AuthenticationFailed("User account is inactive.")
+
+        # Call the base class to get the token
+        data = super().validate(attrs)
+        refresh = self.get_token(user)
+        data['refresh'] = str(refresh)
+        data['access'] = str(refresh.access_token)
+
+        return data
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:

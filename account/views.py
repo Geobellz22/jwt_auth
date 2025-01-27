@@ -8,9 +8,13 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .models import User, ConfirmationCode
 from .serializers import UserSerializer, ConfirmEmailSerializer, MyTokenObtainPairSerializer
 import random
+import logging
 
+# Get a logger instance
+logger = logging.getLogger(__name__)
 
 class RegisterView(APIView):
+    serializer_class = UserSerializer 
     """
     Handles user registration.
     Only collects basic user details and saves them.
@@ -28,11 +32,13 @@ class RegisterView(APIView):
 
 
 class ConfirmMailView(APIView):
+    serializer_class = ConfirmEmailSerializer
     """
     Handles email confirmation.
     Sends a confirmation code and verifies the code entered by the user.
     Notifies support upon successful verification.
     """
+
     def get(self, request):
         user_id = request.query_params.get('user_id')
         user = get_object_or_404(User, id=user_id)
@@ -45,12 +51,16 @@ class ConfirmMailView(APIView):
         ConfirmationCode.objects.create(user=user, code=code, expires_at=expiration_time)
 
         # Send confirmation code to user's email
-        send_mail(
-            subject="Email Confirmation",
-            message=f"Hello {user.username},\n\nYour confirmation code is: {code}.\nPlease enter this code to verify your email within 4 minutes.",
-            from_email="support@example.com",
-            recipient_list=[user.email],
-        )
+        try:
+            send_mail(
+                subject="Email Confirmation",
+                message=f"Hello {user.username},\n\nYour confirmation code is: {code}.\nPlease enter this code to verify your email within 4 minutes.",
+                from_email="support@example.com",
+                recipient_list=[user.email],
+            )
+        except Exception as e:
+            # Log email sending failure
+            logger.error(f"Failed to send confirmation email to {user.email}: {e}")
 
         return Response({"message": "Confirmation code sent to your email."}, status=status.HTTP_200_OK)
 
@@ -71,16 +81,20 @@ class ConfirmMailView(APIView):
                 user.is_verified = True
                 user.save()
 
-                # Notify support team
-                send_mail(
-                    subject="New User Verified",
-                    message=f"User {user.username} ({user.email}) has successfully verified their email.",
-                    from_email="support@example.com",
-                    recipient_list=["support@matrixmomentum.com"],
-                )
-
                 # Delete the confirmation code after successful verification
                 confirmation.delete()
+
+                # Notify support team
+                try:
+                    send_mail(
+                        subject="New User Verified",
+                        message=f"User {user.username} ({user.email}) has successfully verified their email.",
+                        from_email="support@example.com",
+                        recipient_list=["support@matrixmomentum.com"],
+                    )
+                except Exception as e:
+                    # Log the error, but continue with the verification process
+                    logger.error(f"Failed to notify support about user verification for {user.email}: {e}")
 
                 return Response({"message": "Email successfully verified."}, status=status.HTTP_200_OK)
 
