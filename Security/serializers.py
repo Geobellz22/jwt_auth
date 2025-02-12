@@ -54,7 +54,7 @@ class SecuritySerializer(serializers.ModelSerializer):
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField()  # Changed from email to username
     password = serializers.CharField(write_only=True)
-    pin_code = serializers.CharField(required=False, allow_blank=True)
+    
     
     def validate(self, data):
         username = data.get('username')
