@@ -73,4 +73,5 @@ class LoginView(APIView):
             'token': token.key,
             'user_id': user.pk,
             'username': user.username
+            'password': user.password
         }, status=status.HTTP_200_OK)
