@@ -4,6 +4,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.authtoken.models import Token
 from django.conf import settings
+from django.core.mail import send_mail
+from django.utils.crypto import get_random_string
 from .models import Security
 from .serializers import SecuritySerializer, LoginSerializer
 
@@ -19,7 +21,7 @@ class SecuritySettingsView(generics.UpdateAPIView):
         serializer = self.get_serializer(instance, data=request.data, partial=True)
 
         if serializer.is_valid():
-            serializer.save()  # This will trigger the update method in serializer
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -42,17 +44,35 @@ class LoginView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # Check if security features require pin verification
+        # If security features are enabled and no pin provided, generate and send new code
+        if security_instance.ip_address_sensitivity != 'disabled' and not pin_code:
+            verification_code = get_random_string(length=6, allowed_chars='1234567890ABCDEFGHIUKVZY')
+            security_instance.email_verification_code = verification_code
+            security_instance.save()
+            
+            try:
+                send_mail(
+                    subject='Security Verification Code',
+                    message=f"Pin code for entering your account is: {verification_code}\n",
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[user.email],
+                    fail_silently=False,
+                )
+                return Response(
+                    {'message': 'Please check your email for verification code'}, 
+                    status=status.HTTP_200_OK
+                )
+            except Exception as e:
+                return Response(
+                    {'error': 'Failed to send verification code'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        # Verify pin code if security is enabled
         if security_instance.ip_address_sensitivity != 'disabled':
             if not security_instance.email_verification_code:
                 return Response(
                     {'error': 'No verification code has been generated'}, 
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-                
-            if not pin_code:
-                return Response(
-                    {'error': 'Pin code required for login'}, 
                     status=status.HTTP_400_BAD_REQUEST
                 )
                 
@@ -62,16 +82,13 @@ class LoginView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            # Clear the verification code after successful validation
             security_instance.email_verification_code = None
             security_instance.save()
 
-        # Create or get authentication token
         token, _ = Token.objects.get_or_create(user=user)
         
         return Response({
             'token': token.key,
             'user_id': user.pk,
-            'username': user.username,
-            'password': user.password
+            'username': user.username
         }, status=status.HTTP_200_OK)
