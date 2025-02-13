@@ -25,6 +25,38 @@ class SecuritySettingsView(generics.UpdateAPIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class GenerateVerificationCodeView(APIView):
+    def post(self, request):
+        username = request.data.get('username')
+        try:
+            user = User.objects.get(username=username)
+            security_instance = Security.objects.get(user=user)
+            
+            if security_instance.ip_address_sensitivity == 'disabled':
+                return Response(
+                    {'error': 'Security verification is not enabled for this account'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            verification_code = get_random_string(length=6, allowed_chars='1234567890ABCDEFGHIUKVZY')
+            security_instance.email_verification_code = verification_code
+            security_instance.save()
+            
+            send_mail(
+                subject='Security Verification Code',
+                message=f"Pin code for entering your account is: {verification_code}\n",
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+                fail_silently=False,
+            )
+            return Response({'message': 'Verification code sent'}, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+        except Security.DoesNotExist:
+            return Response({'error': 'Security settings not found'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 class LoginView(APIView):
     serializer_class = LoginSerializer
 
@@ -44,35 +76,16 @@ class LoginView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # If security features are enabled and no pin provided, generate and send new code
-        if security_instance.ip_address_sensitivity != 'disabled' and not pin_code:
-            verification_code = get_random_string(length=6, allowed_chars='1234567890ABCDEFGHIUKVZY')
-            security_instance.email_verification_code = verification_code
-            security_instance.save()
-            
-            try:
-                send_mail(
-                    subject='Security Verification Code',
-                    message=f"Pin code for entering your account is: {verification_code}\n",
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[user.email],
-                    fail_silently=False,
-                )
-                return Response(
-                    {'message': 'Please check your email for verification code'}, 
-                    status=status.HTTP_200_OK
-                )
-            except Exception as e:
-                return Response(
-                    {'error': 'Failed to send verification code'}, 
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-
-        # Verify pin code if security is enabled
         if security_instance.ip_address_sensitivity != 'disabled':
             if not security_instance.email_verification_code:
                 return Response(
-                    {'error': 'No verification code has been generated'}, 
+                    {'error': 'No verification code has been generated. Please request a code first.'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+                
+            if not pin_code:
+                return Response(
+                    {'error': 'Pin code required for login'}, 
                     status=status.HTTP_400_BAD_REQUEST
                 )
                 
