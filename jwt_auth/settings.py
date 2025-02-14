@@ -202,6 +202,7 @@ if ENVIRONMENT == "development":
     CORS_ALLOWED_ORIGINS = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
+        "http://localhost:5173",
     ]
 elif ENVIRONMENT == "production":
     CORS_ALLOWED_ORIGIN_REGEXES = [
