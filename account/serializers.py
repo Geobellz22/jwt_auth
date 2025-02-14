@@ -115,3 +115,37 @@ class ConfirmEmailSerializer(serializers.Serializer):
         # Invalidate the confirmation code
         user.confirmation_code.invalidate()
         return user
+class LoginSerializer(serializers.Serializer):
+    username = serializers.CharField(required=True)
+    password = serializers.CharField(required=True, write_only=True)
+
+    def validate(self, attrs):
+        username = attrs.get('username')
+        password = attrs.get('password')
+
+        if username and password:
+            try:
+                user = User.objects.get(username=username)
+                if not user.check_password(password):
+                    raise serializers.ValidationError({
+                        'error': 'Invalid credentials'
+                    })
+                if not user.is_active:
+                    raise serializers.ValidationError({
+                        'error': 'User account is disabled'
+                    })
+                if not user.is_verified:
+                    raise serializers.ValidationError({
+                        'error': 'Email not verified'
+                    })
+            except User.DoesNotExist:
+                raise serializers.ValidationError({
+                    'error': 'User not found'
+                })
+        else:
+            raise serializers.ValidationError({
+                'error': 'Username and password are required'
+            })
+
+        attrs['user'] = user
+        return attrs
