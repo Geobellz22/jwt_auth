@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .models import User, ConfirmationCode
-from .serializers import UserSerializer, ConfirmEmailSerializer, MyTokenObtainPairSerializer
+from .serializers import UserSerializer, ConfirmEmailSerializer, MyTokenObtainPairSerializer, LoginSerializer
 import random
 import logging
 import smtplib
