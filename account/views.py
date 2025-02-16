@@ -6,6 +6,9 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.tokens import RefreshToken
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 from .models import User, ConfirmationCode
 from .serializers import UserSerializer, ConfirmEmailSerializer, MyTokenObtainPairSerializer, LoginSerializer
 import random
@@ -17,8 +20,23 @@ from email.mime.multipart import MIMEMultipart
 logger = logging.getLogger(__name__)
 
 class RegisterView(APIView):
-    serializer_class = UserSerializer
-
+    @swagger_auto_schema(
+        request_body=UserSerializer,
+        operation_description="Register a new user",
+        responses={
+            201: openapi.Response(
+                description="Registration successful",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'message': openapi.Schema(type=openapi.TYPE_STRING),
+                        'user_id': openapi.Schema(type=openapi.TYPE_INTEGER)
+                    }
+                )
+            ),
+            400: "Bad Request"
+        }
+    )
     def post(self, request):
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
@@ -56,20 +74,9 @@ class RegisterView(APIView):
         try:
             send_mail(
                 subject=f"New User Registration - {user.username}",
-                message=f"""
-New user registration details:
-
-Username: {user.username}
-Name: {user.name}
-Email: {user.email}
-
-Wallet Information:
-{wallet_info}
-
-Registration Time: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}
-                """,
-                from_email=user.email,
-                recipient_list=["support@matrixmomentum.com"],
+                message=self._get_support_notification_template(user, wallet_info),
+                from_email=settings.DEFAULT_FROM_EMAIL,  # Changed from user.email
+                recipient_list=[settings.SUPPORT_EMAIL],
                 fail_silently=True
             )
         except Exception as e:
@@ -77,31 +84,25 @@ Registration Time: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}
 
     def _send_verification_email(self, user):
         try:
-            confirmation = user.confirmation_code
+            # Generate new confirmation code
+            code = random.randint(1000000, 9999999)
+            expiration_time = timezone.now() + timezone.timedelta(minutes=4)
             
-            # Create MIME message
+            # Save the confirmation code
+            ConfirmationCode.objects.create(
+                user=user,
+                code=code,
+                expires_at=expiration_time
+            )
+            
             msg = MIMEMultipart()
             msg['From'] = settings.EMAIL_HOST_USER
             msg['To'] = user.email
             msg['Subject'] = "Welcome - Please Verify Your Email"
 
-            body = f"""
-Hello {user.name},
-
-Welcome to our platform! To complete your registration, please verify your email using this code:
-
-{confirmation.code}
-
-⚠️ This code will expire in 4 minutes.
-
-If you didn't create this account, please ignore this email.
-
-Best regards,
-Your Platform Team
-            """
+            body = self._get_verification_email_template(user, code)
             msg.attach(MIMEText(body, 'plain'))
 
-            # Create SMTP connection and send email
             with smtplib.SMTP(settings.EMAIL_HOST, settings.EMAIL_PORT) as server:
                 server.starttls()
                 server.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
@@ -109,60 +110,126 @@ Your Platform Team
 
         except Exception as e:
             logger.error(f"Failed to send verification email to {user.email}: {e}")
+            raise
 
 class ConfirmMailView(APIView):
-    serializer_class = ConfirmEmailSerializer
-
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                'user_id',
+                openapi.IN_QUERY,
+                description="User ID",
+                type=openapi.TYPE_INTEGER,
+                required=True
+            )
+        ],
+        responses={
+            200: openapi.Response(
+                description="New confirmation code sent",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'message': openapi.Schema(type=openapi.TYPE_STRING)
+                    }
+                )
+            ),
+            404: "User not found",
+            500: "Internal server error"
+        }
+    )
     def get(self, request):
         user_id = request.query_params.get('user_id')
         user = get_object_or_404(User, id=user_id)
 
-        # Generate new confirmation code
-        code = random.randint(1000000, 9999999)
-        expiration_time = timezone.now() + timezone.timedelta(minutes=4)
-
-        # Save the confirmation code
-        ConfirmationCode.objects.create(
-            user=user,
-            code=code,
-            expires_at=expiration_time
-        )
-
-        # Send notification to support with user details
-        wallet_info = "\n".join([
-            f"Bitcoin Wallet: {user.bitcoin_wallet or 'Not provided'}",
-            f"Ethereum Wallet: {user.ethereum_wallet or 'Not provided'}",
-            f"Tron Wallet: {user.tron_wallet or 'Not provided'}",
-            f"USDT (TRC20) Wallet: {user.tether_usdt_trc20_wallet or 'Not provided'}",
-            f"USDT (ERC20) Wallet: {user.usdt_erc20_wallet or 'Not provided'}",
-            f"BNB Wallet: {user.bnb_wallet or 'Not provided'}",
-            f"Dogecoin Wallet: {user.dogecoin_wallet or 'Not provided'}",
-            f"Shiba Wallet: {user.shiba_wallet or 'Not provided'}"
-        ])
-
         try:
-            send_mail(
-                subject=f"Verification Code Request - {user.username}",
-                message=f"""
-User requested new verification code:
+            # Delete any existing confirmation codes for this user
+            ConfirmationCode.objects.filter(user=user).delete()
 
-Username: {user.username}
-Name: {user.name}
-Email: {user.email}
+            # Generate new confirmation code
+            code = random.randint(1000000, 9999999)
+            expiration_time = timezone.now() + timezone.timedelta(minutes=4)
 
-Wallet Information:
-{wallet_info}
-
-Request Time: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}
-                """,
-                from_email=user.email,
-                recipient_list=["support@matrixmomentum.com"],
-                fail_silently=True
+            # Save the confirmation code
+            ConfirmationCode.objects.create(
+                user=user,
+                code=code,
+                expires_at=expiration_time
             )
-        except Exception as e:
-            logger.error(f"Failed to send support notification for verification request {user.email}: {e}")
 
-        # Send verification code via SMTP
+            # Send verification code via SMTP
+            self._send_verification_email(user, code)
+
+            return Response(
+                {"message": "New confirmation code sent to your email."},
+                status=status.HTTP_200_OK
+            )
+
+        except Exception as e:
+            logger.error(f"Error in confirmation code generation: {str(e)}")
+            return Response(
+                {"error": "Failed to generate confirmation code. Please try again."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @swagger_auto_schema(
+        request_body=ConfirmEmailSerializer,
+        responses={
+            200: openapi.Response(
+                description="Email verified successfully",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'message': openapi.Schema(type=openapi.TYPE_STRING)
+                    }
+                )
+            ),
+            400: "Invalid confirmation code or expired",
+            404: "User not found"
+        }
+    )
+    def post(self, request):
+        serializer = ConfirmEmailSerializer(data=request.data)
+        if serializer.is_valid():
+            try:
+                user = User.objects.get(id=serializer.validated_data['user_id'])
+                confirmation = ConfirmationCode.objects.filter(
+                    user=user,
+                    code=serializer.validated_data['confirmation_code']
+                ).first()
+
+                if not confirmation:
+                    return Response(
+                        {"error": "Invalid confirmation code."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                if confirmation.expires_at < timezone.now():
+                    confirmation.delete()
+                    return Response(
+                        {"error": "Confirmation code has expired."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                user.is_verified = True
+                user.save()
+                confirmation.delete()
+
+                self._notify_support_verification(user)
+
+                return Response(
+                    {"message": "Email successfully verified."},
+                    status=status.HTTP_200_OK
+                )
+
+            except User.DoesNotExist:
+                return Response(
+                    {"error": "User not found."},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def _send_verification_email(self, user, code):
         try:
             msg = MIMEMultipart()
             msg['From'] = settings.EMAIL_HOST_USER
@@ -188,41 +255,13 @@ Your Platform Team
 
         except Exception as e:
             logger.error(f"Failed to send SMTP verification email to {user.email}: {e}")
-            return Response(
-                {"error": "Failed to send verification code. Please try again."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            raise
 
-        return Response(
-            {"message": "New confirmation code sent to your email."},
-            status=status.HTTP_200_OK
-        )
-
-    def post(self, request):
-        serializer = ConfirmEmailSerializer(data=request.data)
-        if serializer.is_valid():
-            try:
-                user = User.objects.get(id=serializer.validated_data['user_id'])
-                confirmation = ConfirmationCode.objects.get(
-                    user=user,
-                    code=serializer.validated_data['confirmation_code']
-                )
-
-                if confirmation.expires_at < timezone.now():
-                    return Response(
-                        {"error": "Confirmation code has expired."},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-
-                user.is_verified = True
-                user.save()
-                confirmation.delete()
-
-                # Notify support about successful verification
-                try:
-                    send_mail(
-                        subject=f"User Verified - {user.username}",
-                        message=f"""
+    def _notify_support_verification(self, user):
+        try:
+            send_mail(
+                subject=f"User Verified - {user.username}",
+                message=f"""
 User has successfully verified their email:
 
 Username: {user.username}
@@ -230,30 +269,55 @@ Name: {user.name}
 Email: {user.email}
 
 Verification Time: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}
-                        """,
-                        from_email=user.email,
-                        recipient_list=["support@matrixmomentum.com"],
-                    )
-                except Exception as e:
-                    logger.error(f"Failed to notify support about verification for {user.email}: {e}")
+                """,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[settings.SUPPORT_EMAIL],
+                fail_silently=True
+            )
+        except Exception as e:
+            logger.error(f"Failed to notify support about verification for {user.email}: {e}")
 
-                return Response(
-                    {"message": "Email successfully verified."},
-                    status=status.HTTP_200_OK
-                )
-
-            except (User.DoesNotExist, ConfirmationCode.DoesNotExist):
-                return Response(
-                    {"error": "Invalid confirmation code."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 class LoginView(APIView):
-    serializer_class = LoginSerializer
-    
+    @swagger_auto_schema(
+        request_body=LoginSerializer,
+        responses={
+            200: openapi.Response(
+                description="Login successful",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'status': openapi.Schema(type=openapi.TYPE_STRING),
+                        'message': openapi.Schema(type=openapi.TYPE_STRING),
+                        'data': openapi.Schema(
+                            type=openapi.TYPE_OBJECT,
+                            properties={
+                                'user': openapi.Schema(
+                                    type=openapi.TYPE_OBJECT,
+                                    properties={
+                                        'id': openapi.Schema(type=openapi.TYPE_INTEGER),
+                                        'username': openapi.Schema(type=openapi.TYPE_STRING),
+                                        'email': openapi.Schema(type=openapi.TYPE_STRING),
+                                        'name': openapi.Schema(type=openapi.TYPE_STRING),
+                                        'is_verified': openapi.Schema(type=openapi.TYPE_BOOLEAN)
+                                    }
+                                ),
+                                'tokens': openapi.Schema(
+                                    type=openapi.TYPE_OBJECT,
+                                    properties={
+                                        'refresh': openapi.Schema(type=openapi.TYPE_STRING),
+                                        'access': openapi.Schema(type=openapi.TYPE_STRING)
+                                    }
+                                )
+                            }
+                        )
+                    }
+                )
+            ),
+            400: "Invalid credentials"
+        }
+    )
     def post(self, request):
-        serializer = self.serializer_class(data=request.data)
+        serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.validated_data['user']
             
