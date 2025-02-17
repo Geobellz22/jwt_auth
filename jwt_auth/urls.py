@@ -18,6 +18,7 @@ from django.conf.urls.static import static
 from django.conf import settings
 from decouple import config
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
+from drf_yasg.utils import swagger_auto_schema
 
 # Swagger/OpenAPI schema view configuration
 schema_view = get_schema_view(

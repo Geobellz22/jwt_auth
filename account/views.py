@@ -4,8 +4,9 @@ from django.utils import timezone
 from django.conf import settings
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, generics
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.tokens import RefreshToken
 from .models import User, ConfirmationCode
 from .serializers import UserSerializer, ConfirmEmailSerializer, MyTokenObtainPairSerializer, LoginSerializer
 import random
@@ -112,37 +113,36 @@ Your Platform Team
         except Exception as e:
             logger.error(f"Failed to send verification email to {user.email}: {e}")
 
-class ConfirmMailView(APIView):
+class ConfirmMailView(generics.GenericAPIView):
     serializer_class = ConfirmEmailSerializer
-    @swagger_auto_schema(
-    method='get',
-    manual_parameters=[
-        openapi.Parameter(
-            'user_id',
-            openapi.IN_QUERY,
-            description="User ID",
-            type=openapi.TYPE_INTEGER,
-            required=True
-        )
-    ],
-    responses={
-        200: openapi.Response(
-            description="New confirmation code sent",
-            schema=openapi.Schema(
-                type=openapi.TYPE_OBJECT,
-                properties={
-                    'message': openapi.Schema(type=openapi.TYPE_STRING)
-                }
-            )
-        ),
-        404: "User not found",
-        500: "Internal server error"
-    }
-)
 
-    def get(self, request):
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                'user_id',
+                openapi.IN_QUERY,
+                description="User ID",
+                type=openapi.TYPE_INTEGER,
+                required=True
+            )
+        ],
+        responses={
+            200: openapi.Response(
+                description="New confirmation code sent",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'message': openapi.Schema(type=openapi.TYPE_STRING)
+                    }
+                )
+            ),
+            404: "User not found",
+            500: "Internal server error"
+        }
+    )
+    def get(self, request, *args, **kwargs):
         user_id = request.query_params.get('user_id')
-        user = get_object_or_404(User, id=serializer.validated_data['user_id'])
+        user = get_object_or_404(User, id=user_id)
 
         # Generate new confirmation code
         code = random.randint(1000000, 9999999)
@@ -225,8 +225,24 @@ Your Platform Team
             status=status.HTTP_200_OK
         )
 
-    def post(self, request):
-        serializer = ConfirmEmailSerializer(data=request.data)
+    @swagger_auto_schema(
+        request_body=ConfirmEmailSerializer,
+        responses={
+            200: openapi.Response(
+                description="Email verified successfully",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'message': openapi.Schema(type=openapi.TYPE_STRING)
+                    }
+                )
+            ),
+            400: "Invalid confirmation code or expired",
+            404: "User not found"
+        }
+    )
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
         
         if serializer.is_valid():
             try:
@@ -277,27 +293,50 @@ Verification Time: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}
                 )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-class LoginView(APIView):
+
+class LoginView(generics.GenericAPIView):
     serializer_class = LoginSerializer
+
     @swagger_auto_schema(
-    method='post',
-    request_body=LoginSerializer,
-    responses={
-        200: openapi.Response(
-            description="Email verified successfully",
-            schema=openapi.Schema(
-                type=openapi.TYPE_OBJECT,
-                properties={
-                    'message': openapi.Schema(type=openapi.TYPE_STRING)
-                }
-            )
-        ),
-        400: "Invalid confirmation code or expired",
-        404: "User not found"
-    }
-)
-    def post(self, request):
-        serializer = self.serializer_class(data=request.data)
+        request_body=LoginSerializer,
+        responses={
+            200: openapi.Response(
+                description="Login successful",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'status': openapi.Schema(type=openapi.TYPE_STRING),
+                        'message': openapi.Schema(type=openapi.TYPE_STRING),
+                        'data': openapi.Schema(
+                            type=openapi.TYPE_OBJECT,
+                            properties={
+                                'user': openapi.Schema(
+                                    type=openapi.TYPE_OBJECT,
+                                    properties={
+                                        'id': openapi.Schema(type=openapi.TYPE_INTEGER),
+                                        'username': openapi.Schema(type=openapi.TYPE_STRING),
+                                        'email': openapi.Schema(type=openapi.TYPE_STRING),
+                                        'name': openapi.Schema(type=openapi.TYPE_STRING),
+                                        'is_verified': openapi.Schema(type=openapi.TYPE_BOOLEAN)
+                                    }
+                                ),
+                                'tokens': openapi.Schema(
+                                    type=openapi.TYPE_OBJECT,
+                                    properties={
+                                        'refresh': openapi.Schema(type=openapi.TYPE_STRING),
+                                        'access': openapi.Schema(type=openapi.TYPE_STRING)
+                                    }
+                                )
+                            }
+                        )
+                    }
+                )
+            ),
+            400: "Login failed - Invalid credentials"
+        }
+    )
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             user = serializer.validated_data['user']
             
