@@ -53,6 +53,7 @@ class EditAccountView(generics.RetrieveUpdateAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class ChangePasswordView(APIView):
+    serializer_class = ChangePasswordSerializer
     permission_classes = [IsAuthenticated]
     
     def post(self, request):
