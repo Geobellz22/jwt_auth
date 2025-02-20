@@ -331,6 +331,44 @@ Verification Time: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}
         except Exception as e:
             logger.error(f"Error in email verification: {str(e)}")
             return Response(
+                
                 {"error": "An unexpected error occurred"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+            def post(self, request, *args, **kwargs):
+                serializer = self.get_serializer(data=request.data)
+                if serializer.is_valid():
+                    user = serializer.validated_data['user']
+            
+                    # Generate JWT tokens
+                    refresh = RefreshToken.for_user(user)
+            
+                return Response({
+                'status': 'success',
+                'message': 'Login successful',
+                'data': {
+                    'user': {
+                        'id': user.id,
+                        'username': user.username,
+                        'email': user.email,
+                        'name': user.name,
+                        'is_verified': user.is_verified
+                    },
+                    'tokens': {
+                        'refresh': str(refresh),
+                        'access': str(refresh.access_token)
+                    }
+                }
+            }, status=status.HTTP_200_OK)
+            
+        return Response({
+            'status': 'error',
+            'message': 'Login failed',
+            'errors': serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
+
+class CustomTokenRefreshView(TokenRefreshView):
+    pass
