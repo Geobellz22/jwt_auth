@@ -153,21 +153,6 @@ Your Platform Team
 
 class ConfirmMailView(generics.GenericAPIView):
     serializer_class = ConfirmEmailSerializer
-    @swagger_auto_schema(
-    method='post',
-    request_body=openapi.Schema(
-        type=openapi.TYPE_OBJECT,
-        properties={
-            'confirmation_code': openapi.Schema(type=openapi.TYPE_STRING, description='The confirmation code sent to the user\'s email')
-        },
-        required=['confirmation_code']
-    ),
-    responses={
-        200: openapi.Response('Email confirmation successful.'),
-        400: openapi.Response('Invalid confirmation code, expired code, or bad request.')
-    },
-    operation_description="Confirm user's email."
-    )
     def get(self, request, *args, **kwargs):
         try:
             # Generate random confirmation code
