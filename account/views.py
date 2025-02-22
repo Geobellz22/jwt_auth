@@ -11,7 +11,7 @@ from .models import User, ConfirmationCode
 from .serializers import (
     UserSerializer, 
     ConfirmEmailSerializer, 
-    MyTokenObtainPairSerializer, 
+    MyTokenObtainPairSerializer,
     LoginSerializer
 )
 import random
@@ -55,9 +55,20 @@ class RegisterView(APIView):
                 except Exception as e:
                     logger.error(f"Support notification failed for {user.email}: {e}")
                 
+                # Generate confirmation code
+                confirmation_code = str(random.randint(1000000, 9999999))
+                expiration_time = timezone.now() + timezone.timedelta(minutes=4)
+                
+                # Store confirmation code
+                ConfirmationCode.objects.create(
+                    user=user,
+                    code=confirmation_code,
+                    expires_at=expiration_time
+                )
+                
                 # Send verification email
                 try:
-                    self._send_verification_email(user)
+                    self._send_verification_email(user, confirmation_code)
                 except Exception as e:
                     logger.error(f"Verification email failed for {user.email}: {e}")
                     return Response({
@@ -112,9 +123,7 @@ Registration Time: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}
             fail_silently=True
         )
 
-    def _send_verification_email(self, user):
-        confirmation = user.confirmation_code
-        
+    def _send_verification_email(self, user, confirmation_code):
         msg = MIMEMultipart()
         msg['From'] = settings.EMAIL_HOST_USER
         msg['To'] = user.email
@@ -125,7 +134,7 @@ Hello {user.name},
 
 Welcome to our platform! To complete your registration, please use this verification code:
 
-{confirmation.code}
+{confirmation_code}
 
 ⚠️ This code will expire in 4 minutes.
 
@@ -146,95 +155,32 @@ class ConfirmMailView(generics.GenericAPIView):
     serializer_class = ConfirmEmailSerializer
 
     @swagger_auto_schema(
-        operation_description="Request a new email confirmation code",
-        manual_parameters=[
-            openapi.Parameter(
-                'user_id',
-                openapi.IN_QUERY,
-                description="User ID",
-                type=openapi.TYPE_INTEGER,
-                required=True
-            )
-        ],
+        operation_description="Generate new confirmation code",
         responses={
             200: openapi.Schema(
                 type=openapi.TYPE_OBJECT,
                 properties={
-                    'message': openapi.Schema(type=openapi.TYPE_STRING),
-                    'expires_in': openapi.Schema(type=openapi.TYPE_INTEGER)
+                    'confirmation_code': openapi.Schema(
+                        type=openapi.TYPE_STRING,
+                        description="Generated confirmation code"
+                    )
                 }
-            ),
-            404: "User not found",
-            400: "Invalid request",
-            500: "Server error"
+            )
         }
     )
     def get(self, request, *args, **kwargs):
         try:
-            user_id = request.query_params.get('user_id')
-            if not user_id:
-                return Response(
-                    {"error": "user_id is required"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-
-            user = get_object_or_404(User, id=user_id)
+            # Generate random confirmation code
+            confirmation_code = str(random.randint(1000000, 9999999))
             
-            # Generate new code
-            code = str(random.randint(1000000, 9999999))
-            expiration_time = timezone.now() + timezone.timedelta(minutes=4)
-            
-            # Update or create confirmation code
-            confirmation, _ = ConfirmationCode.objects.update_or_create(
-                user=user,
-                defaults={
-                    'code': code,
-                    'expires_at': expiration_time,
-                    'is_used': False
-                }
-            )
-
-            # Send email
-            try:
-                msg = MIMEMultipart()
-                msg['From'] = settings.EMAIL_HOST_USER
-                msg['To'] = user.email
-                msg['Subject'] = "Your New Verification Code"
-
-                body = f"""
-Hello {user.name},
-
-Your new verification code is: {code}
-
-⚠️ This code will expire in 4 minutes.
-
-Best regards,
-Your Platform Team
-                """
-                
-                msg.attach(MIMEText(body, 'plain'))
-
-                with smtplib.SMTP(settings.EMAIL_HOST, settings.EMAIL_PORT) as server:
-                    server.starttls()
-                    server.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
-                    server.send_message(msg)
-
-            except Exception as e:
-                logger.error(f"Failed to send verification email: {str(e)}")
-                return Response(
-                    {"error": "Failed to send verification code"},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                )
-
             return Response({
-                "message": "New confirmation code sent to your email",
-                "expires_in": 4
+                "confirmation_code": confirmation_code
             }, status=status.HTTP_200_OK)
 
         except Exception as e:
-            logger.error(f"Error in confirmation code request: {str(e)}")
+            logger.error(f"Error generating confirmation code: {str(e)}")
             return Response(
-                {"error": "An unexpected error occurred"},
+                {"error": "Failed to generate confirmation code"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
@@ -242,11 +188,11 @@ Your Platform Team
         operation_description="Verify email with confirmation code",
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
-            required=['user_id', 'confirmation_code'],
             properties={
                 'user_id': openapi.Schema(type=openapi.TYPE_INTEGER),
                 'confirmation_code': openapi.Schema(type=openapi.TYPE_STRING)
-            }
+            },
+            required=['user_id', 'confirmation_code']
         ),
         responses={
             200: openapi.Schema(
@@ -331,19 +277,59 @@ Verification Time: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}
         except Exception as e:
             logger.error(f"Error in email verification: {str(e)}")
             return Response(
-                
                 {"error": "An unexpected error occurred"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-            def post(self, request, *args, **kwargs):
-                serializer = self.get_serializer(data=request.data)
-                if serializer.is_valid():
-                    user = serializer.validated_data['user']
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
+
+class CustomTokenRefreshView(TokenRefreshView):
+    pass
+
+class LoginView(APIView):
+    @swagger_auto_schema(
+        request_body=LoginSerializer,
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'status': openapi.Schema(type=openapi.TYPE_STRING),
+                    'message': openapi.Schema(type=openapi.TYPE_STRING),
+                    'data': openapi.Schema(
+                        type=openapi.TYPE_OBJECT,
+                        properties={
+                            'user': openapi.Schema(
+                                type=openapi.TYPE_OBJECT,
+                                properties={
+                                    'id': openapi.Schema(type=openapi.TYPE_INTEGER),
+                                    'username': openapi.Schema(type=openapi.TYPE_STRING),
+                                    'email': openapi.Schema(type=openapi.TYPE_STRING),
+                                    'name': openapi.Schema(type=openapi.TYPE_STRING),
+                                    'is_verified': openapi.Schema(type=openapi.TYPE_BOOLEAN)
+                                }
+                            ),
+                            'tokens': openapi.Schema(
+                                type=openapi.TYPE_OBJECT,
+                                properties={
+                                    'refresh': openapi.Schema(type=openapi.TYPE_STRING),
+                                    'access': openapi.Schema(type=openapi.TYPE_STRING)
+                                }
+                            )
+                        }
+                    )
+                }
+            ),
+            401: "Invalid credentials"
+        }
+    )
+    def post(self, request):
+        serializer = LoginSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.validated_data['user']
+            refresh = RefreshToken.for_user(user)
             
-                    # Generate JWT tokens
-                    refresh = RefreshToken.for_user(user)
-            
-                return Response({
+            return Response({
                 'status': 'success',
                 'message': 'Login successful',
                 'data': {
@@ -360,46 +346,7 @@ Verification Time: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}
                     }
                 }
             }, status=status.HTTP_200_OK)
-            
-        return Response({
-            'status': 'error',
-            'message': 'Login failed',
-            'errors': serializer.errors
-        }, status=status.HTTP_400_BAD_REQUEST)
-
-class CustomTokenObtainPairView(TokenObtainPairView):
-    serializer_class = MyTokenObtainPairSerializer
-
-class CustomTokenRefreshView(TokenRefreshView):
-    pass
-class LoginView(APIView):
-    def post(self, request):
-        username = request.data.get('username')
-        password = request.data.get('password')
-
-        from django.contrib.auth import authenticate
-        user = authenticate(username=username, password=password)
-
-        if user:
-            refresh = RefreshToken.for_user(user)
-            return Response({
-                'status': 'success',
-                'message': 'Login successful',
-                'data': {
-                    'user': {
-                        'id': user.id,
-                        'username': user.username,
-                        'email': user.email,
-                        'name': user.profile.name,
-                        'is_verified': user.profile.is_verified,
-                    },
-                    'tokens': {
-                        'refresh': str(refresh),
-                        'access': str(refresh.access_token)
-                    }
-                }
-            }, status=status.HTTP_200_OK)
-
+        
         return Response({
             'status': 'error',
             'message': 'Invalid credentials'
