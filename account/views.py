@@ -166,6 +166,7 @@ class ConfirmMailView(generics.GenericAPIView):
         200: openapi.Response('Email confirmation successful.'),
         400: openapi.Response('Invalid confirmation code, expired code, or bad request.')
     },
+    operation_description="Confirm user's email."
     def get(self, request, *args, **kwargs):
         try:
             # Generate random confirmation code
