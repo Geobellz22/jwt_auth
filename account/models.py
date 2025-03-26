@@ -89,10 +89,17 @@ class ConfirmationCode(models.Model):
     def __str__(self):
         return f'Confirmation Code for {self.user.username}'
 
+    def save(self, *args, **kwargs):
+        """Ensure expires_at is always set when a new instance is created."""
+        if not self.pk:  # Only set expires_at when creating a new instance
+            self.expires_at = timezone.now() + timezone.timedelta(minutes=4)
+        super().save(*args, **kwargs)
+
     def generate_code(self):
-        """Generates a new confirmation code and updates expiration time."""
+        """Generates a new confirmation code and resets expiration time."""
         self.code = f"{random.randint(1000000, 9999999)}"
-        self.expires_at = timezone.now() + timezone.timedelta(hours=24)
+        self.expires_at = timezone.now() + timezone.timedelta(minutes=4)
+        self.is_used = False  # Reset usage status
         self.save()
 
     def is_valid(self):

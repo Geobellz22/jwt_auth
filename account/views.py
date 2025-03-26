@@ -57,14 +57,22 @@ class RegisterView(APIView):
                 
                 # Generate confirmation code
                 confirmation_code = str(random.randint(1000000, 9999999))
-                expiration_time = timezone.now() + timezone.timedelta(minutes=4)
+                
                 
                 # Store confirmation code
-                ConfirmationCode.objects.create(
+                # ConfirmationCode.objects.create(
+                #     user=user,
+                #     code=confirmation_code
+                # )
+                confirmation, created = ConfirmationCode.objects.get_or_create(
                     user=user,
-                    code=confirmation_code,
-                    expires_at=expiration_time
+                    defaults={'code': confirmation_code}
                 )
+
+                # If the record already exists, update the code
+                if not created:
+                    confirmation.code = confirmation_code
+                    confirmation.save()
                 
                 # Send verification email
                 try:
