@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="585c4b2c-2425-449c-9c6e-fd201ad5e9db" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/jwt_auth/account/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/jwt_auth/account/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/jwt_auth/account/serializers.py" beforeDir="false" afterPath="$PROJECT_DIR$/jwt_auth/account/serializers.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/jwt_auth/account/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/jwt_auth/account/views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/jwt_auth/jwt_auth/.env-example" beforeDir="false" afterPath="$PROJECT_DIR$/jwt_auth/jwt_auth/.env-example" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="ProjectErrors" />
+  </component>
+  <component name="ProjectId" id="2u8CEQ0L8oi7eCTXUK1Baso99MW" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/ok/Desktop/jwt_auth&quot;
+  }
+}</component>
+  <component name="RunManager">
+    <configuration default="true" type="PythonConfigurationType" factoryName="Python">
+      <module name="jwt_auth" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+        <env name="DJANGO_SETTINGS_MODULE" value="jwt_auth.settings " />
+      </envs>
+      <option name="SDK_HOME" value="C:\Users\ok\Desktop\jwt_auth\.venv\Scripts\python.exe" />
+      <option name="SDK_NAME" value="Python 3.10 (jwt_auth)" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="585c4b2c-2425-449c-9c6e-fd201ad5e9db" name="Changes" comment="" />
+      <created>1741620703272</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1741620703272</updated>
+    </task>
+    <servers />
+  </component>
+</project>
