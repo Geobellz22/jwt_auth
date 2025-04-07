@@ -20,8 +20,12 @@ RUN chmod +x /entrypoint.sh
 # Collect static files to the STATIC_ROOT (this is required for production)
 RUN python manage.py collectstatic --noinput
 
+# Ensure celery is installed
+RUN pip install --no-cache-dir celery
+
 # Expose the port that Django will run on
 EXPOSE 8000
 
 # Start the application using the entrypoint script
 ENTRYPOINT ["/entrypoint.sh"]
+
