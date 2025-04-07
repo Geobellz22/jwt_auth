@@ -135,7 +135,7 @@ Registration Time: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}
         msg = MIMEMultipart()
         msg['From'] = settings.EMAIL_HOST_USER
         msg['To'] = user.email
-        msg['Subject'] = "Welcome to the App - Please Verify Your Email"
+        msg['Subject'] = "Welcome to our App - Please Verify Your Email"
 
         body = f"""
 Hello {user.name},
