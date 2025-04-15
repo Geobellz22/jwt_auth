@@ -48,7 +48,7 @@ class UserSerializer(serializers.ModelSerializer):
             'is_user', 'password', 'bitcoin_wallet',
             'tether_usdt_trc20_wallet', 'tron_wallet',
             'ethereum_wallet', 'bnb_wallet', 'dogecoin_wallet',
-            'usdt_erc20_wallet', 'bitcoin_cash_wallet', 'shiba_wallet',
+            'litecoin_wallet', 'bitcoin_cash_wallet', 'shiba_wallet', 'tether_erc20_wallet'
         ]
         read_only_fields = ['is_user']
         extra_kwargs = {
@@ -89,6 +89,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 class ConfirmEmailSerializer(serializers.Serializer):
     user_id = serializers.IntegerField(required=True)
+    #username = serializers.CharField()
     confirmation_code = serializers.CharField(max_length=7, required=True)
 
     def validate(self, data):

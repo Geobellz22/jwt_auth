@@ -15,7 +15,8 @@ class EditAccount(models.Model):
     ethereum_wallet = models.CharField(max_length=250, blank=True, null=True)
     bnb_wallet = models.CharField(max_length=250, blank=True, null=True)
     dogecoin_wallet = models.CharField(max_length=250, blank=True, null=True)
-    usdt_erc20_wallet = models.CharField(max_length=250, blank=True, null=True)
+    #usdt_erc20_wallet = models.CharField(max_length=250, blank=True, null=True)
+    litecoin_wallet = models.CharField(max_length=250, blank=True, null=True)
     bitcoin_cash_wallet = models.CharField(max_length=250, blank=True, null=True)
     tether_erc20_wallet = models.CharField(max_length=250, blank=True, null=True)
     shiba_wallet = models.CharField(max_length=250, blank=True, null=True)
@@ -31,3 +32,13 @@ class EditAccount(models.Model):
 
     def save(self, *args, **kwargs):
         super(EditAccount, self).save(*args, **kwargs)
+class AccountEditLog(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    updated_fields = models.JSONField()  # Dictionary of changed fields and their new values
+    edited_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Edit log for {self.user.username} at {self.edited_at.strftime('%Y-%m-%d %H:%M:%S')}"
+
+
+

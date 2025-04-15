@@ -28,6 +28,7 @@ class MakeDeposit(CreateAPIView):
             'Dogecoin': 'DEereXL4WAi4MNcVdCfTcBPMEB1a5UFMUe',
             'Litecoin': 'ltc1q46nn6wg3z6wvsnwdfysn4sqqxnvk3uqfps2g3d',
             'Shiba': 'BDKbzpgY7GGE9iQEgrhZRborx7zvGDsaWLKHm4VwBtpn',
+            'Bitcoin Cash': 'qrm8ad75nechkxtaa7jyv577zdh7whze2qs28z4jj2',
         }
 
         # Validate wallet type

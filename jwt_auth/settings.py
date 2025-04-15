@@ -33,9 +33,6 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'corsheaders',
     'drf_spectacular',
-    'django_celery_results',
-    'django_celery_beat',
-    'celery',
 
     # Custom apps
     'account',

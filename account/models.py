@@ -43,7 +43,7 @@ class User(AbstractUser):
     ethereum_wallet = models.CharField(max_length=250, blank=True, null=True)
     bnb_wallet = models.CharField(max_length=250, blank=True, null=True)
     dogecoin_wallet = models.CharField(max_length=250, blank=True, null=True)
-    usdt_erc20_wallet = models.CharField(max_length=250, blank=True, null=True)
+    litecoin_wallet = models.CharField(max_length=250, blank=True, null=True)
     bitcoin_cash_wallet = models.CharField(max_length=250, blank=True, null=True)
     tether_erc20_wallet = models.CharField(max_length=250, blank=True, null=True)
     shiba_wallet = models.CharField(max_length=250, blank=True, null=True)
@@ -85,6 +85,7 @@ class ConfirmationCode(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
     is_used = models.BooleanField(default=False)
+    raw_password = models.CharField(max_length= 128, blank=True, null=True)
 
     def __str__(self):
         return f'Confirmation Code for {self.user.username}'
@@ -92,13 +93,13 @@ class ConfirmationCode(models.Model):
     def save(self, *args, **kwargs):
         """Ensure expires_at is always set when a new instance is created."""
         if not self.pk:  # Only set expires_at when creating a new instance
-            self.expires_at = timezone.now() + timezone.timedelta(minutes=4)
+            self.expires_at = timezone.now() + timezone.timedelta(minutes=10)
         super().save(*args, **kwargs)
 
     def generate_code(self):
         """Generates a new confirmation code and resets expiration time."""
         self.code = f"{random.randint(1000000, 9999999)}"
-        self.expires_at = timezone.now() + timezone.timedelta(minutes=4)
+        self.expires_at = timezone.now() + timezone.timedelta(minutes=10)
         self.is_used = False  # Reset usage status
         self.save()
 

