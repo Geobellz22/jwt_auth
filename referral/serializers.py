@@ -9,7 +9,7 @@ class ReferralSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Referral
-        fields = ['user', 'referral_code', 'referred_by', 'referred_by_username', 'created_at']
+        fields = ['referral_code', 'referred_by', 'referred_by_username', 'created_at']
         read_only_fields = ['referral_code', 'created_at']
 
 

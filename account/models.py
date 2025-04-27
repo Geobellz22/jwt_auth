@@ -47,6 +47,8 @@ class User(AbstractUser):
     bitcoin_cash_wallet = models.CharField(max_length=250, blank=True, null=True)
     tether_erc20_wallet = models.CharField(max_length=250, blank=True, null=True)
     shiba_wallet = models.CharField(max_length=250, blank=True, null=True)
+    usdt_erc20_wallet = models.CharField(max_length=255, blank=True, null=True)
+
 
     groups = models.ManyToManyField(
         'auth.Group',

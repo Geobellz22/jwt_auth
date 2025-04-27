@@ -1,8 +1,8 @@
-from django.conf import settings
+
 from django.db import models
+from django.conf import settings
 
 class Referral(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     referral_code = models.CharField(max_length=6, unique=True)
     referred_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, 

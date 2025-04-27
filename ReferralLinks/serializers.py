@@ -15,6 +15,5 @@ class ReferralLinkSerializer(serializers.ModelSerializer):
         """
         request = self.context.get('request')
         if request is not None:
-            # Example: Generating the referral link with a base URL
             return f"{request.scheme}://{request.get_host()}/referral/{obj.referral_code}"
         return ""
