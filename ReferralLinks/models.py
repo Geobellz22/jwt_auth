@@ -15,17 +15,8 @@ class ReferralLink(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.referral_code:
-            self.referral_code = self.generate_unique_referral_code()
+            self.referral_code = self.referred_user.username
         super().save(*args, **kwargs)
-
-    def generate_unique_referral_code(self):
-        while True:
-            random_digits = ''.join(random.choices(string.digits, k=5))
-            username_part = self.referred_user.username.lower().replace(' ', '')
-            referral_code = f"{username_part}-{random_digits}"
-
-            if not ReferralLink.objects.filter(referral_code=referral_code).exists():
-                return referral_code
 
     def __str__(self):
         return f"{self.referred_user.username}'s Referral Link"
