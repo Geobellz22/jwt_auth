@@ -3,17 +3,15 @@ from .models import ReferralLink
 
 class ReferralLinkSerializer(serializers.ModelSerializer):
     referral_link = serializers.SerializerMethodField()
+    
 
     class Meta:
         model = ReferralLink
-        fields = ['id', 'referred_user', 'referral_link', 'referral_code', 'created_at', 'reward_granted']
-        read_only_fields = ('referral_code', 'created_at', 'reward_granted')
+        fields = ['id', 'referred_user', 'referrer', 'referral_code', 'referral_link', 'created_at']
 
     def get_referral_link(self, obj) -> str:
-        """
-        Generate the full referral link for the given object.
-        """
         request = self.context.get('request')
-        if request is not None:
-            return f"{request.scheme}://{request.get_host()}/?ref={obj.referral_code}"
-        return ""
+        if request:
+            return f"{request.scheme}://{request.get_host()}/register/?ref={obj.referral_code}"
+        return None
+
