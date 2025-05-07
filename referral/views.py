@@ -8,6 +8,7 @@ from .serializers import ReferralStatsSerializer
 
 class ReferralSummaryView(APIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = ReferralStatsSerializer
 
     def get(self, request):
         try:
