@@ -1,24 +1,13 @@
 from rest_framework import serializers
-from .models import Referral, ReferralReward
+from .models import ReferralSummary
 
-
-class ReferralSerializer(serializers.ModelSerializer):
-    referred_by_username = serializers.CharField(
-        source='referred_by.username', read_only=True
-    )
-
+class ReferralStatsSerializer(serializers.ModelSerializer):
+    user = serializers.StringRelatedField(read_only=True)
+    """
+    Serializer for ReferralSummary model to return referral statistics.
+    """
     class Meta:
-        model = Referral
-        fields = ['referral_code', 'referred_by', 'referred_by_username', 'created_at']
-        read_only_fields = ['referral_code', 'created_at']
-
-
-class ReferralRewardSerializer(serializers.ModelSerializer):
-    referral_user = serializers.CharField(
-        source='referral.user.username', read_only=True
-    )
-
-    class Meta:
-        model = ReferralReward
-        fields = ['referral', 'referral_user', 'level', 'reward_percentage']
-        read_only_fields = ['reward_percentage']  # Rewards are predefined
+        model = ReferralSummary
+        fields = ['user', 'total_referrals', 'active_referrals', 'total_commission']
+        
+        read_only_fields = fields
