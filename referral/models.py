@@ -92,8 +92,7 @@ class ReferralSummary(models.Model):
         max_digits=12, decimal_places=2,
         default=0.00
     )
-
-    def __str__(self):
+def __str__(self):
         return (
             f"{self.user.username}: {self.total_referrals} referrals, "
             f"{self.active_referrals} active, ${self.total_commission}"

@@ -2,12 +2,8 @@ from rest_framework import serializers
 from .models import ReferralSummary
 
 class ReferralStatsSerializer(serializers.ModelSerializer):
-    user = serializers.StringRelatedField(read_only=True)
-    """
-    Serializer for ReferralSummary model to return referral statistics.
-    """
+    username = serializers.CharField(source='user.username', read_only=True)
+
     class Meta:
         model = ReferralSummary
-        fields = ['user', 'total_referrals', 'active_referrals', 'total_commission']
-        
-        read_only_fields = fields
+        fields = ['username', 'total_referrals', 'active_referrals', 'total_commission']
