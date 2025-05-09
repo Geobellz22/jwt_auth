@@ -1,6 +1,7 @@
 import uuid
 from django.db import models
 from django.conf import settings
+from django.utils.crypto import get_random_string
 
 class ReferralLink(models.Model):
     """
@@ -22,7 +23,8 @@ class ReferralLink(models.Model):
     referral_code = models.CharField(
         max_length=100,
         unique=True,
-        help_text="Typically the referrer's username"
+        blank=True,
+        help_text="Automatically generated or based on the referrer's username"
     )
     referral_link = models.CharField(
         max_length=255,
@@ -34,11 +36,22 @@ class ReferralLink(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
-        # Ensure referral_code = username if not provided
-        if not self.referral_code and self.referrer:
-            self.referral_code = self.referrer.username
+        # Auto-generate referral_code if not set
+        if not self.referral_code:
+            if self.referrer:
+                base_code = self.referrer.username
+            else:
+                base_code = get_random_string(8)
 
-        # Build the full referral_link if missing
+            # Ensure uniqueness
+            code = base_code
+            counter = 1
+            while ReferralLink.objects.filter(referral_code=code).exclude(pk=self.pk).exists():
+                code = f"{base_code}{counter}"
+                counter += 1
+            self.referral_code = code
+
+        # Build full referral_link if missing
         if not self.referral_link and self.referral_code:
             base_url = getattr(settings, 'BACKEND_BASE_URL', 'http://localhost:8000')
             self.referral_link = f"{base_url}/register/?ref={self.referral_code}"
@@ -47,4 +60,3 @@ class ReferralLink(models.Model):
 
     def __str__(self):
         return f"{self.referral_link} (by {self.referrer.username if self.referrer else '—'})"
-            
